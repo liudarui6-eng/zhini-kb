@@ -1,0 +1,1473 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>知你 · 书籍拆解</title>
+<meta name="description" content="把一本书拆成可验证、可迁移、可教学的知识单元。" />
+<meta name="color-scheme" content="light" />
+<style>:root {
+  --bg: #f5f2ea;
+  --card: #fffdf7;
+  --ink: #1a1712;
+  --muted: #6f695c;
+  --faint: #9a9284;
+  --line: #e5dfd0;
+  --line-2: #d3cab6;
+  --accent: #8f3b2b;
+  --accent-2: #f2e4dd;
+  --ok: #3d6a4d;
+  --warn: #8a6417;
+  --draft: #847d6e;
+  --dispute: #6a4a78;
+  --serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", "STSong", Georgia, serif;
+  --sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, system-ui, sans-serif;
+  --mono: "SF Mono", ui-monospace, Menlo, monospace;
+  --r: 14px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection { background: var(--accent-2); color: var(--ink); }
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+input { font: inherit; }
+
+.wrap { width: 100%; max-width: 1060px; margin: 0 auto; padding-left: 26px; padding-right: 26px; }
+
+/* ── 顶栏 ───────────────────────────────────────────── */
+
+.bar {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(245, 242, 234, .88);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+  border-bottom: 1px solid var(--line);
+}
+.bar-in {
+  display: flex; align-items: center; gap: 20px;
+  padding-top: 13px; padding-bottom: 13px;
+}
+.brand { display: flex; align-items: center; gap: 11px; flex: none; }
+.mark {
+  width: 34px; height: 34px; border-radius: 9px;
+  border: 1px solid var(--line-2); background: var(--card);
+  display: grid; place-items: center;
+  font-family: var(--serif); font-size: 19px; color: var(--accent);
+}
+.bt { display: flex; flex-direction: column; line-height: 1.25; }
+.bt b { font-family: var(--serif); font-size: 17px; letter-spacing: .06em; font-weight: 600; }
+.bt i { font-style: normal; font-size: 11px; color: var(--faint); letter-spacing: .2em; }
+
+.search {
+  flex: 1 1 auto; min-width: 0; max-width: 460px;
+  display: flex; align-items: center; gap: 9px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; padding: 7px 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.search:focus-within { border-color: var(--line-2); box-shadow: 0 0 0 3px rgba(143, 59, 43, .07); }
+.search svg { flex: none; color: var(--faint); }
+.search input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: none;
+  font-size: 13.5px; color: var(--ink);
+}
+.search input::placeholder { color: var(--faint); }
+.search kbd {
+  flex: none; font-family: var(--mono); font-size: 11px; color: var(--faint);
+  border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; background: #faf7f0;
+}
+
+.count {
+  flex: none; margin-left: auto;
+  font-size: 12px; color: var(--faint);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* ── 主体 ───────────────────────────────────────────── */
+
+main { padding-top: 30px; padding-bottom: 100px; }
+
+.intro h1 {
+  font-family: var(--serif); font-size: 30px; font-weight: 600;
+  margin: 0 0 7px; letter-spacing: .02em;
+}
+.intro p { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
+
+.filters {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding-bottom: 16px; margin-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.chip {
+  white-space: nowrap; font-size: 12.5px; color: var(--muted);
+  border: 1px solid transparent; border-radius: 999px;
+  padding: 4px 11px; transition: color .15s, background .15s, border-color .15s;
+}
+.chip:hover { background: var(--accent-2); color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--ink); color: #fbf8f1; border-color: var(--ink); }
+.divider { width: 1px; height: 13px; background: var(--line-2); margin: 0 5px; flex: none; }
+
+/* ── 卡片 ───────────────────────────────────────────── */
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(296px, 1fr)); gap: 14px; }
+
+.card {
+  position: relative; display: flex; flex-direction: column; gap: 9px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 18px 19px 15px; text-align: left;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-2);
+  box-shadow: 0 10px 26px -14px rgba(60, 45, 20, .28);
+}
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card-book {
+  font-size: 11px; color: var(--faint); letter-spacing: .11em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card h2 {
+  font-family: var(--serif); font-size: 19px; font-weight: 600;
+  margin: 0; line-height: 1.45; letter-spacing: .01em;
+}
+.card-claim {
+  margin: 0; font-size: 13.5px; line-height: 1.75; color: var(--muted);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.card-bot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line);
+}
+
+.tag {
+  font-size: 10.5px; color: var(--faint);
+  background: #f3efe4; border-radius: 5px; padding: 1px 7px;
+  white-space: nowrap;
+}
+.tags { display: flex; gap: 4px; flex-wrap: wrap; overflow: hidden; max-height: 20px; }
+
+/* ── 状态 / 可信度 ──────────────────────────────────── */
+
+.badge {
+  display: inline-flex; align-items: center; gap: 5px; flex: none;
+  font-size: 11.5px; padding: 1px 9px; border-radius: 999px;
+  border: 1px solid currentColor; line-height: 1.7; white-space: nowrap;
+}
+.badge i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.badge[data-s="ok"] { color: var(--ok); }
+.badge[data-s="warn"] { color: var(--warn); }
+.badge[data-s="draft"] { color: var(--draft); }
+.badge[data-s="dispute"] { color: var(--dispute); }
+.badge[data-s="gone"] { color: var(--faint); text-decoration: line-through; }
+
+.conf { display: inline-flex; align-items: center; gap: 3px; }
+.conf i { width: 5px; height: 5px; border-radius: 50%; background: var(--line-2); }
+.conf i.on { background: var(--accent); }
+.conf-label { font-size: 10.5px; color: var(--faint); margin-left: 5px; letter-spacing: .04em; }
+
+/* ── 详情 ───────────────────────────────────────────── */
+
+.detail { max-width: 810px; }
+
+.back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--muted); margin-bottom: 24px; padding: 3px 0;
+}
+.back:hover { color: var(--accent); }
+
+.d-kicker { font-size: 12px; color: var(--faint); letter-spacing: .1em; margin-bottom: 11px; }
+.d-title {
+  font-family: var(--serif); font-size: 34px; line-height: 1.32;
+  font-weight: 600; margin: 0 0 16px; letter-spacing: .01em;
+}
+.d-claim {
+  font-size: 16.5px; line-height: 1.85; color: #332e25;
+  margin: 0 0 20px; padding-left: 16px; border-left: 3px solid var(--accent);
+}
+.d-badges { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+
+/* 六要素：单列表格，每项一个色块标签 */
+.facets {
+  margin: 28px 0 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 2px 22px;
+}
+.facet {
+  display: grid; grid-template-columns: 84px minmax(0, 1fr);
+  gap: 22px; padding: 19px 0;
+  border-bottom: 1px solid var(--line);
+}
+.facet:last-child { border-bottom: 0; }
+.facet dt { margin: 0; padding-top: 1px; }
+.facet dt span {
+  display: block; width: 100%; text-align: center;
+  background: var(--c, #8f3b2b);
+  color: #fbf7ec;
+  font-size: 11px; letter-spacing: .18em; line-height: 1.8;
+  padding: 3px 0; border-radius: 3px;
+  white-space: nowrap;
+}
+.facet dd {
+  margin: 0; min-width: 0;
+  font-size: 14.5px; line-height: 1.95; color: #332f27;
+}
+.facet dd p { margin: 0; }
+.facet dd p + p { margin-top: 9px; }
+.facet .li { display: block; position: relative; padding-left: 14px; }
+.facet .li::before {
+  content: "·"; position: absolute; left: 2px; top: -1px;
+  color: var(--c, var(--accent)); font-weight: 700;
+}
+.facet .li.num { padding-left: 0; }
+.facet .li.num::before { content: none; }
+.facet .li + .li { margin-top: 6px; }
+
+.facet[data-f="concept"]    { --c: #8f3b2b; }
+.facet[data-f="principle"]  { --c: #33506b; }
+.facet[data-f="conditions"] { --c: #6b5420; }
+.facet[data-f="method"]     { --c: #2f5c4a; }
+.facet[data-f="boundary"]   { --c: #5a3f66; }
+.facet[data-f="transfer"]   { --c: #8a5a2b; }
+
+.quote {
+  margin: 30px 0 0; padding: 19px 21px 17px;
+  background: #f9f5e9; border: 1px solid var(--line); border-radius: 11px;
+}
+.quote blockquote {
+  margin: 0; font-family: var(--serif); font-size: 15.5px;
+  line-height: 1.95; color: #3a332a;
+}
+.q-loc { margin-top: 11px; font-size: 11.5px; color: var(--faint); letter-spacing: .07em; }
+.q-empty {
+  display: flex; gap: 9px; align-items: flex-start;
+  font-size: 13px; line-height: 1.75; color: var(--warn);
+}
+.q-empty b { flex: none; font-weight: 600; }
+
+.evi {
+  margin-top: 22px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 2px 22px;
+}
+.evi-row {
+  display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 22px;
+  padding: 16px 0; border-bottom: 1px solid var(--line);
+}
+.evi-row:last-child { border-bottom: 0; }
+.evi-row > span {
+  display: block; align-self: start; text-align: center;
+  background: #8b8577; color: #fbf7ec;
+  font-size: 11px; letter-spacing: .18em; line-height: 1.8;
+  padding: 3px 0; border-radius: 3px; white-space: nowrap;
+}
+.evi-row p { margin: 0; font-size: 13.5px; line-height: 1.9; color: #3a352c; }
+.evi-note { display: block; margin-top: 5px; font-size: 12.5px; line-height: 1.75; color: var(--muted); }
+
+.rel { margin-top: 34px; }
+.rel h3 {
+  font-family: var(--serif); font-size: 13px; font-weight: 600;
+  letter-spacing: .16em; color: var(--faint); margin: 0 0 12px;
+}
+.rel-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.rel-a {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  border: 1px solid var(--line); background: var(--card);
+  border-radius: 9px; padding: 6px 12px; font-size: 13px;
+  transition: border-color .15s, background .15s;
+}
+.rel-a:hover { border-color: var(--line-2); background: #fff; }
+.rel-a em { font-style: normal; color: var(--faint); font-size: 10.5px; }
+
+/* ── Markdown 正文 ──────────────────────────────────── */
+
+.md { margin-top: 36px; padding-top: 26px; border-top: 1px solid var(--line); }
+.md h1, .md h2, .md h3, .md h4 {
+  font-family: var(--serif); font-weight: 600; line-height: 1.55;
+  margin: 28px 0 10px; letter-spacing: .01em;
+}
+.md h1 { font-size: 22px; }
+.md h2 { font-size: 18px; }
+.md h3 { font-size: 15.5px; }
+.md p { margin: 0 0 13px; font-size: 14.5px; line-height: 1.92; color: #332f27; }
+.md ul, .md ol { margin: 0 0 14px; padding-left: 21px; }
+.md li { margin: 3px 0; font-size: 14.5px; line-height: 1.85; color: #332f27; }
+.md blockquote {
+  margin: 16px 0; padding: 2px 0 2px 16px;
+  border-left: 2px solid var(--line-2); color: var(--muted);
+}
+.md blockquote p { margin: 0; }
+.md code {
+  font-family: var(--mono); font-size: .87em;
+  background: #f1ecdf; padding: 1px 5px; border-radius: 4px;
+}
+.md pre { background: #f1ecdf; padding: 14px 16px; border-radius: 9px; overflow: auto; }
+.md pre code { background: none; padding: 0; }
+.md hr { border: 0; border-top: 1px solid var(--line); margin: 26px 0; }
+.md a { color: var(--accent); border-bottom: 1px solid var(--accent-2); }
+
+/* ── 空态 / 页脚 ────────────────────────────────────── */
+
+.empty { text-align: center; padding: 76px 20px; }
+.empty b { display: block; font-family: var(--serif); font-size: 17px; color: var(--muted); margin-bottom: 6px; }
+.empty span { font-size: 13px; color: var(--faint); }
+
+.foot { padding-bottom: 54px; }
+.foot p { margin: 0; font-size: 11.5px; line-height: 1.9; color: var(--faint); }
+.foot code { font-family: var(--mono); font-size: 11px; background: #f1ecdf; padding: 1px 5px; border-radius: 4px; }
+
+/* ── 响应式 ─────────────────────────────────────────── */
+
+@media (max-width: 860px) {
+  .facets { padding: 2px 16px; }
+  .facet { grid-template-columns: 1fr; gap: 9px; padding: 15px 0; }
+  .facet dt span, .evi-row > span { display: inline-block; width: auto; padding: 3px 12px; }
+  .evi-row > span { justify-self: start; }
+  .evi-row { grid-template-columns: 1fr; gap: 9px; padding: 14px 0; }
+}
+
+@media (max-width: 720px) {
+  .wrap { padding-left: 18px; padding-right: 18px; }
+  .bt i { display: none; }
+  .count { display: none; }
+  .search { max-width: none; }
+  .search kbd { display: none; }
+  .intro h1 { font-size: 25px; }
+  .d-title { font-size: 27px; }
+  .d-claim { font-size: 15.5px; }
+  .evi { padding: 2px 16px; }
+  main { padding-top: 22px; }
+  .grid { grid-template-columns: 1fr; }
+  .divider { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+.rescount { margin-left: auto; font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.meta { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--faint); }
+.meta code { font-family: var(--mono); font-size: 11px; background: #f1ecdf; padding: 1px 5px; border-radius: 4px; }
+
+/* ── 视图切换 ───────────────────────────────────────── */
+
+.viewbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; margin: 0 0 16px;
+}
+.seg {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: #efe9dc; border: 1px solid var(--line); border-radius: 10px;
+}
+.seg a {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--muted); padding: 5px 14px; border-radius: 7px;
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+.seg a:hover { color: var(--ink); }
+.seg a.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(60, 45, 20, .09); }
+.seg a svg { opacity: .65; }
+.seg a.on svg { opacity: 1; }
+
+/* ── 书架 ───────────────────────────────────────────── */
+
+.shelf {
+  display: grid; gap: 26px 22px;
+  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+  align-items: start;
+}
+.book { display: block; }
+
+.cover {
+  position: relative; aspect-ratio: 3 / 4; overflow: hidden;
+  border-radius: 3px 8px 8px 3px;
+  background: var(--c, #33414a);
+  box-shadow: 0 1px 2px rgba(40, 30, 15, .14), 0 12px 26px -16px rgba(40, 30, 15, .55);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.cover::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 8px; z-index: 2;
+  background: linear-gradient(90deg, rgba(0, 0, 0, .42), rgba(0, 0, 0, .04));
+}
+.cover::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(152deg, rgba(255, 255, 255, .12), rgba(0, 0, 0, .22));
+}
+.cover img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: cover; display: block; }
+.book:hover .cover {
+  transform: translateY(-3px);
+  box-shadow: 0 2px 4px rgba(40, 30, 15, .16), 0 20px 36px -18px rgba(40, 30, 15, .6);
+}
+.book:focus-visible .cover { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.cover-in {
+  position: absolute; z-index: 2; inset: 12px 12px 12px 20px;
+  border: 1px solid rgba(246, 240, 226, .17);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 14px 10px 32px; text-align: center;
+}
+.cv-title {
+  font-family: var(--serif); font-size: 16.5px; font-weight: 600;
+  line-height: 1.7; letter-spacing: .07em; color: #f6f0e2;
+  text-wrap: balance;
+}
+.cv-rule { width: 20px; height: 1px; background: rgba(246, 240, 226, .34); margin-top: 10px; }
+.cv-author {
+  position: absolute; left: 0; right: 0; bottom: 11px;
+  font-size: 9px; letter-spacing: .12em; color: rgba(246, 240, 226, .58);
+  padding: 0 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.book-title {
+  margin-top: 10px; font-size: 13px; line-height: 1.45; font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.book-title + .book-cap { margin-top: 3px; }
+.book-cap {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-top: 11px; font-size: 12px; color: var(--faint);
+}
+.stars { display: inline-flex; gap: 1px; }
+.stars i { font-style: normal; font-size: 9.5px; color: var(--line-2); }
+.stars i.on { color: var(--accent); }
+
+/* ── 一本书 ─────────────────────────────────────────── */
+
+.bh { display: grid; grid-template-columns: 186px minmax(0, 1fr); gap: 36px; align-items: start; }
+.cover.lg { border-radius: 3px 9px 9px 3px; }
+.cover.lg .cv-title { font-size: 19px; }
+.cover.lg .cv-author { font-size: 10px; }
+
+.bh-info { padding-top: 4px; min-width: 0; }
+.bh-info h1 {
+  font-family: var(--serif); font-size: 32px; font-weight: 600;
+  line-height: 1.3; margin: 0 0 6px; letter-spacing: .01em;
+}
+.bh-orig { font-size: 12px; color: var(--faint); letter-spacing: .04em; margin-bottom: 14px; }
+.bh-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+  font-size: 12.5px; color: var(--muted); margin-bottom: 20px;
+}
+.bh-meta .dot { width: 1px; height: 11px; background: var(--line-2); display: inline-block; }
+
+.bh-thesis {
+  font-family: var(--serif); font-size: 17px; line-height: 1.95; color: #332e25;
+  margin: 0 0 20px; padding-left: 15px; border-left: 3px solid var(--accent);
+  white-space: pre-line;
+}
+.bh-verdict {
+  display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 14px;
+  padding-top: 15px; border-top: 1px solid var(--line);
+}
+.bh-verdict span { font-size: 11.5px; letter-spacing: .14em; color: var(--faint); padding-top: 3px; }
+.bh-verdict p { margin: 0; font-size: 13.5px; line-height: 1.88; color: #3a352c; white-space: pre-line; }
+.bh-tags { margin-top: 16px; }
+.bh-tags .tags { max-height: none; }
+
+.sec-title {
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--serif); font-size: 14px; font-weight: 600;
+  letter-spacing: .14em; color: var(--muted);
+  margin: 40px 0 18px;
+}
+.sec-title::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+@media (max-width: 760px) {
+  .bh { grid-template-columns: 1fr; gap: 24px; }
+  .bh .cover.lg { width: 148px; }
+  .bh-info h1 { font-size: 26px; }
+  .bh-thesis { font-size: 15.5px; }
+  .shelf { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 22px 16px; }
+  .cv-title { font-size: 14.5px; }
+  .bh-verdict { grid-template-columns: 1fr; gap: 4px; }
+  .bh-verdict span { padding-top: 0; }
+}
+
+/* 出错时把错误直接显示出来，而不是留一个点不动的页面 */
+#err {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 999;
+  padding: 10px 16px; font-size: 13px; line-height: 1.6;
+  background: #7d2b20; color: #fdf6ea;
+  font-family: var(--sans);
+}
+
+/* ── 原书 PDF ───────────────────────────────────────── */
+
+.pdf-link {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 18px; padding: 6px 13px;
+  border: 1px solid var(--line-2); border-radius: 8px;
+  background: var(--card); font-size: 12.5px; color: var(--muted);
+  transition: border-color .15s, color .15s, background .15s;
+}
+.pdf-link:hover { color: var(--ink); border-color: var(--muted); background: #fff; }
+.pdf-link em { font-style: normal; color: var(--faint); font-size: 11px; }
+
+.q-go {
+  color: var(--accent); border-bottom: 1px solid rgba(143, 59, 43, .32);
+  padding-bottom: 1px; white-space: nowrap;
+}
+.q-go:hover { border-bottom-color: var(--accent); }
+.q-empty .q-go { color: var(--warn); border-bottom-color: rgba(138, 100, 23, .38); }
+.q-empty .q-go:hover { border-bottom-color: var(--warn); }
+
+/* 视图栏右侧 / 详情页顶部操作 */
+.vb-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.vb-right .rescount { margin-left: 0; }
+.d-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.d-top .back { margin-bottom: 0; }
+.sec-head { display: flex; align-items: center; gap: 12px; margin: 40px 0 18px; }
+.sec-head .sec-title { margin: 0; flex: 1; }
+
+
+/* ── 网页里编辑 ─────────────────────────────────────── */
+
+.ed-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(30, 24, 16, .38);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.ed-sheet {
+  width: 100%; max-width: 780px; max-height: min(92vh, 900px);
+  background: var(--bg); border: 1px solid var(--line-2);
+  border-radius: 16px; box-shadow: 0 30px 80px -30px rgba(40, 30, 15, .6);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ed-sheet-sm { max-width: 620px; }
+
+.ed-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 17px 24px 14px; border-bottom: 1px solid var(--line);
+}
+.ed-head h2 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; }
+.ed-x { font-size: 14px; color: var(--faint); padding: 4px 9px; border-radius: 6px; }
+.ed-x:hover { background: var(--accent-2); color: var(--ink); }
+
+.ed-form { overflow-y: auto; padding: 2px 24px 10px; }
+.ed-sec { padding: 16px 0 8px; }
+.ed-sec + .ed-sec { border-top: 1px solid var(--line); }
+.ed-sec h3 {
+  margin: 0 0 13px; font-family: var(--serif); font-size: 11.5px; font-weight: 600;
+  letter-spacing: .18em; color: var(--faint);
+}
+.ed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 18px; }
+.ed-f { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ed-wide { grid-column: 1 / -1; }
+.ed-f > span { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--muted); }
+.ed-f > span i { font-style: normal; font-size: 10.5px; color: var(--faint); }
+
+.ed-f input, .ed-f select, .ed-f textarea {
+  width: 100%; font: inherit; font-size: 13.5px; line-height: 1.7;
+  color: var(--ink); background: var(--card);
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; resize: vertical; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.ed-f input:focus, .ed-f select:focus, .ed-f textarea:focus {
+  border-color: var(--line-2); box-shadow: 0 0 0 3px rgba(143, 59, 43, .08);
+}
+.ed-f textarea { min-height: 60px; }
+.ed-f select[multiple] { padding: 4px; }
+.ed-f select[multiple] option { padding: 4px 6px; border-radius: 4px; }
+
+.ed-foot {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 24px; border-top: 1px solid var(--line);
+  background: #f2eee4;
+}
+.ed-msg { flex: 1; font-size: 12.5px; color: var(--muted); }
+.ed-msg.bad { color: #8f2f22; }
+.ed-cancel, .ed-save { border-radius: 8px; padding: 8px 18px; font-size: 13.5px; }
+.ed-cancel { color: var(--muted); border: 1px solid var(--line-2); }
+.ed-cancel:hover { color: var(--ink); }
+.ed-save { background: var(--ink); color: #fbf7ec; }
+.ed-save:hover { background: #2c2721; }
+.ed-save:disabled { opacity: .55; cursor: default; }
+
+html.ed-lock, html.ed-lock body { overflow: hidden; }
+
+/* 新建 / 编辑 按钮 */
+.add-btn, .edit-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: var(--muted);
+  border: 1px solid var(--line-2); border-radius: 8px;
+  padding: 5px 12px; background: var(--card);
+  transition: color .15s, border-color .15s, background .15s;
+}
+.add-btn:hover, .edit-btn:hover { color: var(--ink); border-color: var(--muted); background: #fff; }
+.add-btn { margin-left: auto; }
+.add-btn + .rescount, .edit-btn + .rescount { margin-left: 12px; }
+
+@media (max-width: 720px) {
+  .ed-overlay { padding: 0; align-items: stretch; }
+  .ed-sheet { max-width: none; max-height: none; border-radius: 0; border: 0; height: 100%; }
+  .ed-grid { grid-template-columns: 1fr; }
+  .ed-head, .ed-form, .ed-foot { padding-left: 18px; padding-right: 18px; }
+}
+</style>
+</head>
+<body>
+<div id="err" hidden></div>
+<script>
+  window.addEventListener('error', function (e) {
+    var b = document.getElementById('err');
+    if (!b) return;
+    b.hidden = false;
+    b.textContent = '页面出错：' + (e.message || '未知错误') + ' —— 刷新一次（Cmd/Ctrl + R）试试。';
+  });
+</script>
+<div id="root"></div>
+<script>window.__KB__ = {"books":[{"id":"thinking-fast-and-slow","title":"思考，快与慢","originalTitle":"Thinking, Fast and Slow","author":"丹尼尔·卡尼曼","year":2011,"status":"在读","rating":4,"order":1,"thesis":"人对世界的判断，大部分由快速直觉完成，只有在必要时才调用缓慢的推理；\n这两套机制的错配，是大量可预测的判断错误的来源。","audience":"想理解自己为什么会判断失误的人；做产品、投资、管理决策的人。","verdict":"值得读，但不必从头读到尾。前半部分（系统一二、启发式与偏差）是主干，\n后半部分（前景理论、两个自我）更适合当参考书按需查。","tags":["认知","决策","心理学"],"bodyText":"全书骨架 1. 两套系统 ：系统一（快、自动、省力）与系统二（慢、费力、受控）。 2. 启发式与偏差 ：锚定、可得性、代表性、框架效应——都是系统一省力的副产物。 3. 过度自信 ：叙事谬误、后见之明、规划谬误。 4. 选择 ：前景理论、损失厌恶、参照点、禀赋效应。 5. 两个自我 ：体验自我与记忆自我，峰终定律与过程忽视。 读法建议 第 1 14 章是核心，值得精读。 第 15 章之后可以跳读，遇到具体决策场景再回来查。 书中不少实验近年复现性有争议——读的时候把\"结论\"和\"实验证据强度\"分开记，正好用这个库的 confidence 字段区分。","bodyHtml":"\u003ch2>全书骨架\u003c/h2>\n\u003col>\u003cli>\u003cstrong>两套系统\u003c/strong>：系统一（快、自动、省力）与系统二（慢、费力、受控）。\u003c/li>\u003cli>\u003cstrong>启发式与偏差\u003c/strong>：锚定、可得性、代表性、框架效应——都是系统一省力的副产物。\u003c/li>\u003cli>\u003cstrong>过度自信\u003c/strong>：叙事谬误、后见之明、规划谬误。\u003c/li>\u003cli>\u003cstrong>选择\u003c/strong>：前景理论、损失厌恶、参照点、禀赋效应。\u003c/li>\u003cli>\u003cstrong>两个自我\u003c/strong>：体验自我与记忆自我，峰终定律与过程忽视。\u003c/li>\u003c/ol>\n\u003ch2>读法建议\u003c/h2>\n\u003cul>\u003cli>第 1~14 章是核心，值得精读。\u003c/li>\u003cli>第 15 章之后可以跳读，遇到具体决策场景再回来查。\u003c/li>\u003cli>书中不少实验近年复现性有争议——读的时候把&quot;结论&quot;和&quot;实验证据强度&quot;分开记，正好用这个库的 \u003ccode>confidence\u003c/code> 字段区分。\u003c/li>\u003c/ul>","bodyRaw":"## 全书骨架\n\n1. **两套系统**：系统一（快、自动、省力）与系统二（慢、费力、受控）。\n2. **启发式与偏差**：锚定、可得性、代表性、框架效应——都是系统一省力的副产物。\n3. **过度自信**：叙事谬误、后见之明、规划谬误。\n4. **选择**：前景理论、损失厌恶、参照点、禀赋效应。\n5. **两个自我**：体验自我与记忆自我，峰终定律与过程忽视。\n\n## 读法建议\n\n- 第 1~14 章是核心，值得精读。\n- 第 15 章之后可以跳读，遇到具体决策场景再回来查。\n- 书中不少实验近年复现性有争议——读的时候把\"结论\"和\"实验证据强度\"分开记，正好用这个库的 `confidence` 字段区分。","_file":"content/books/thinking-fast-and-slow.md","accent":"#33414a","cover":"","pdf":null,"unitCount":4},{"id":"poor-charlies-almanack","title":"穷查理宝典","originalTitle":"Poor Charlie's Almanack","author":"查理·芒格（彼得·考夫曼 编）","year":2005,"status":"在读","rating":5,"order":2,"thesis":"用一张跨学科的\"思维模型格栅\"替代单一学科的狭隘视角，\n再用逆向思考和能力圈约束自己的下注——这就是芒格的全部方法论。","audience":"做长期决策的人；想建立自己判断框架而不是收集结论的人。","verdict":"不是一本\"读完\"的书，是一本\"反复查\"的书。真正有价值的是《人类误判心理学》\n那一章和散落在各篇里的判断原则，其余部分是传记与演讲，可作背景。","tags":["决策","思维模型","投资"],"bodyText":"全书骨架 1. 人物与背景 ：芒格的生平、合伙人关系、行事风格。 2. 思维模型格栅 ：从数学、物理、生物、心理、经济各取几个大模型，交叉验证。 3. 人类误判心理学 ：25 种心理倾向，是全书最硬的一章。 4. 投资原则 ：能力圈、安全边际、逆向思考、集中下注。 5. 演讲与语录 ：重复出现的原则，适合当检查清单。 读法建议 先读《人类误判心理学》，它是可操作的部分。 再读投资原则几篇，配合具体案例看。 传记部分可以最后读，帮助理解\"为什么这个人会这么想\"。","bodyHtml":"\u003ch2>全书骨架\u003c/h2>\n\u003col>\u003cli>\u003cstrong>人物与背景\u003c/strong>：芒格的生平、合伙人关系、行事风格。\u003c/li>\u003cli>\u003cstrong>思维模型格栅\u003c/strong>：从数学、物理、生物、心理、经济各取几个大模型，交叉验证。\u003c/li>\u003cli>\u003cstrong>人类误判心理学\u003c/strong>：25 种心理倾向，是全书最硬的一章。\u003c/li>\u003cli>\u003cstrong>投资原则\u003c/strong>：能力圈、安全边际、逆向思考、集中下注。\u003c/li>\u003cli>\u003cstrong>演讲与语录\u003c/strong>：重复出现的原则，适合当检查清单。\u003c/li>\u003c/ol>\n\u003ch2>读法建议\u003c/h2>\n\u003cul>\u003cli>先读《人类误判心理学》，它是可操作的部分。\u003c/li>\u003cli>再读投资原则几篇，配合具体案例看。\u003c/li>\u003cli>传记部分可以最后读，帮助理解&quot;为什么这个人会这么想&quot;。\u003c/li>\u003c/ul>","bodyRaw":"## 全书骨架\n\n1. **人物与背景**：芒格的生平、合伙人关系、行事风格。\n2. **思维模型格栅**：从数学、物理、生物、心理、经济各取几个大模型，交叉验证。\n3. **人类误判心理学**：25 种心理倾向，是全书最硬的一章。\n4. **投资原则**：能力圈、安全边际、逆向思考、集中下注。\n5. **演讲与语录**：重复出现的原则，适合当检查清单。\n\n## 读法建议\n\n- 先读《人类误判心理学》，它是可操作的部分。\n- 再读投资原则几篇，配合具体案例看。\n- 传记部分可以最后读，帮助理解\"为什么这个人会这么想\"。","_file":"content/books/poor-charlies-almanack.md","accent":"#5a3a2c","cover":"","pdf":null,"unitCount":3},{"id":"almanack-of-naval","title":"纳瓦尔宝典","originalTitle":"The Almanack of Naval Ravikant","author":"纳瓦尔·拉维坎特（埃里克·乔根森 编）","year":2020,"status":"在读","rating":5,"order":3,"thesis":"财富和幸福都不是运气，而是可以习得的技能：\n财富来自专长、杠杆和判断力，幸福来自欲望的减少。","audience":"想靠自己的判断和创造赚钱，而不是靠出卖时间的人。","verdict":"这不是一本方法论，是一本密度极高的观点集。\n适合随手翻、反复读，不适合从头啃到尾；\n几乎每一条都需要你自己补论证——这恰好是这个库该干的事。","tags":["财富","判断","杠杆"],"bodyText":"全书骨架 1. 财富 ：专长、杠杆、复利、责任、判断力。 2. 幸福 ：欲望、当下、平静。 3. 自我 ：健康、阅读、习惯。 4. 哲学 ：自由、接受、死亡。 （不同版本编排略有差异，按主题读即可。） 读法建议 先读「财富」那部分，它是可操作的一半。 「幸福」更像随笔，适合睡前读，不适合做笔记。 全书由推文和访谈编排而成，跳读没有损失——但每条都值得停下来问一句\"它凭什么成立\"。","bodyHtml":"\u003ch2>全书骨架\u003c/h2>\n\u003col>\u003cli>\u003cstrong>财富\u003c/strong>：专长、杠杆、复利、责任、判断力。\u003c/li>\u003cli>\u003cstrong>幸福\u003c/strong>：欲望、当下、平静。\u003c/li>\u003cli>\u003cstrong>自我\u003c/strong>：健康、阅读、习惯。\u003c/li>\u003cli>\u003cstrong>哲学\u003c/strong>：自由、接受、死亡。\u003c/li>\u003c/ol>\n\u003cp>（不同版本编排略有差异，按主题读即可。）\u003c/p>\n\u003ch2>读法建议\u003c/h2>\n\u003cul>\u003cli>先读「财富」那部分，它是可操作的一半。\u003c/li>\u003cli>「幸福」更像随笔，适合睡前读，不适合做笔记。\u003c/li>\u003cli>全书由推文和访谈编排而成，跳读没有损失——但每条都值得停下来问一句&quot;它凭什么成立&quot;。\u003c/li>\u003c/ul>","bodyRaw":"## 全书骨架\n\n1. **财富**：专长、杠杆、复利、责任、判断力。\n2. **幸福**：欲望、当下、平静。\n3. **自我**：健康、阅读、习惯。\n4. **哲学**：自由、接受、死亡。\n\n（不同版本编排略有差异，按主题读即可。）\n\n## 读法建议\n\n- 先读「财富」那部分，它是可操作的一半。\n- 「幸福」更像随笔，适合睡前读，不适合做笔记。\n- 全书由推文和访谈编排而成，跳读没有损失——但每条都值得停下来问一句\"它凭什么成立\"。","_file":"content/books/almanack-of-naval.md","accent":"#2d4a45","cover":"","pdf":null,"unitCount":6},{"id":"nonviolent-communication","title":"非暴力沟通","originalTitle":"Nonviolent Communication - A Language of Life","author":"马歇尔·卢森堡（阮胤华 译）","year":2009,"status":"在读","rating":4,"order":4,"thesis":"我们说话的方式本身在制造冲突。\n把\"评判\"拆成\"观察—感受—需要—请求\"，不是为了让对方听话，\n而是为了让彼此的需要被听见。","audience":"想改善亲密关系、亲子关系、职场沟通的人；也适合总是先责怪自己的人。","verdict":"前半本（一到六章）是方法，后半本是把方法放进具体场景。\n只读不练等于没读——这本书的价值在句子层面，不在结论层面。\n建议每读一章就改一句自己真实说过的话。","tags":["沟通","关系","心理"],"bodyText":"全书骨架 1. 让爱融入生活 （第一章）：四要素的总纲。 2. 是什么蒙蔽了爱 （第二章）：道德评判、比较、回避责任、强人所难。 3. 观察 / 感受 / 需要 / 请求 （三到六章）：四要素逐个展开。 4. 倾听 （七、八章）：把同一套方法用在听别人上。 5. 爱自己 / 愤怒 / 强制力 （九到十一章）：把方法用在自己身上。 6. 重获热情 / 表达感激 （十二、十三章）：收尾。 关于页码 书里每条知识单元的 page 指的是 这份 PDF 的页序 ，点「去原书第 N 页核对」可以直接跳过去。 它不是纸书的页码——两者通常差几页，别混用。 读法建议 一到六章配合练习，别跳。 第七、八章（倾听）比想象中难，建议先在自己身上练。 这本书的原文比任何二手总结都具体，值得直接读原句。","bodyHtml":"\u003ch2>全书骨架\u003c/h2>\n\u003col>\u003cli>\u003cstrong>让爱融入生活\u003c/strong>（第一章）：四要素的总纲。\u003c/li>\u003cli>\u003cstrong>是什么蒙蔽了爱\u003c/strong>（第二章）：道德评判、比较、回避责任、强人所难。\u003c/li>\u003cli>\u003cstrong>观察 / 感受 / 需要 / 请求\u003c/strong>（三到六章）：四要素逐个展开。\u003c/li>\u003cli>\u003cstrong>倾听\u003c/strong>（七、八章）：把同一套方法用在听别人上。\u003c/li>\u003cli>\u003cstrong>爱自己 / 愤怒 / 强制力\u003c/strong>（九到十一章）：把方法用在自己身上。\u003c/li>\u003cli>\u003cstrong>重获热情 / 表达感激\u003c/strong>（十二、十三章）：收尾。\u003c/li>\u003c/ol>\n\u003ch2>关于页码\u003c/h2>\n\u003cp>书里每条知识单元的 \u003ccode>page\u003c/code> 指的是\u003cstrong>这份 PDF 的页序\u003c/strong>，点「去原书第 N 页核对」可以直接跳过去。\u003cbr>它不是纸书的页码——两者通常差几页，别混用。\u003c/p>\n\u003ch2>读法建议\u003c/h2>\n\u003cul>\u003cli>一到六章配合练习，别跳。\u003c/li>\u003cli>第七、八章（倾听）比想象中难，建议先在自己身上练。\u003c/li>\u003cli>这本书的原文比任何二手总结都具体，值得直接读原句。\u003c/li>\u003c/ul>","bodyRaw":"## 全书骨架\n\n1. **让爱融入生活**（第一章）：四要素的总纲。\n2. **是什么蒙蔽了爱**（第二章）：道德评判、比较、回避责任、强人所难。\n3. **观察 / 感受 / 需要 / 请求**（三到六章）：四要素逐个展开。\n4. **倾听**（七、八章）：把同一套方法用在听别人上。\n5. **爱自己 / 愤怒 / 强制力**（九到十一章）：把方法用在自己身上。\n6. **重获热情 / 表达感激**（十二、十三章）：收尾。\n\n## 关于页码\n\n书里每条知识单元的 `page` 指的是**这份 PDF 的页序**，点「去原书第 N 页核对」可以直接跳过去。\n它不是纸书的页码——两者通常差几页，别混用。\n\n## 读法建议\n\n- 一到六章配合练习，别跳。\n- 第七、八章（倾听）比想象中难，建议先在自己身上练。\n- 这本书的原文比任何二手总结都具体，值得直接读原句。","_file":"content/books/nonviolent-communication.md","accent":"#5b3a4a","cover":"","pdf":{"href":"pdf/nonviolent-communication.pdf","name":"nonviolent-communication.pdf","size":2383436,"label":"2.3 MB"},"unitCount":5},{"id":"孙子兵法","title":"孙子兵法","originalTitle":"","author":"","year":"","status":"在读","rating":4,"order":99,"thesis":"","audience":"","verdict":"","tags":[],"bodyText":"先胜后战","bodyHtml":"\u003cp>先胜后战\u003c/p>","bodyRaw":"先胜后战","_file":"content/books/孙子兵法.md","accent":"#43313f","cover":"","pdf":null,"unitCount":1}],"units":[{"id":"system-1-and-2","order":1,"page":0,"book":"thinking-fast-and-slow","title":"系统一与系统二","claim":"直觉和推理不是同一种能力的高低之分，而是两套并行运作、各有优劣的机制。","concept":"系统一：快速、自动、几乎不费力、始终在线，靠联想和模式识别给出判断。\n\n系统二：缓慢、需要注意力、费力，负责计算、比较、自我控制，平时处于省电状态。","principle":"两套系统的分工是演化的结果：系统一负责在熟悉环境里快速反应，成本低、命中率高；\n系统二负责处理不熟悉、需要规则和计算的情形，准确但昂贵。\n代价是——系统二很懒，多数时候直接把系统一的直觉当成结论盖章放行。","conditions":"这个框架成立的前提是：人同时拥有自动加工与控制加工两种模式，\n并且控制加工需要消耗有限的心理资源。","method":"判断一次判断由谁主导，看三件事：\n1. 是不是秒答？秒答多半是系统一。\n2. 答案是不是\"感觉对了\"？感觉对而说不出理由，是系统一。\n3. 是否需要调用规则、计算或比较？需要时系统二被唤醒，但可能很快把决定交还给系统一。","boundary":"系统一不是\"低级\"的。在高度训练过的领域（消防、棋类、急诊），专家直觉的准确率远超慢思考。\n卡尼曼自己也强调：只有在\"环境有规律 + 有长期反馈\"两个条件同时满足时，直觉才值得信任。","transfer":"- 产品设计：默认选项、一键操作是在服务系统一；关键决策页要强制唤醒系统二（二次确认、等待期、把损失换算成具体金额）。\n- 面试招聘：第一印象是系统一，结构化评分表是给系统二搭的脚手架。\n- 投资：出现\"感觉会涨\"时，先问自己是否真的处在有规律、有反馈的环境里。","quote":"","locator":"第一部分 · 第 1 章","evidence":"书中以\"愤怒的脸／17×24\"的对比实验开场；双加工模型在认知心理学中有大量独立研究支撑。","confidence":4,"confidenceNote":"框架本身稳固，但\"系统一二\"是简化隐喻，真实边界比书中表述更模糊。","status":"已验证","tags":["认知","判断","决策"],"links":["latticework","peak-end"],"updated":"2026-11-26","bodyHtml":"\u003ch2>我的理解\u003c/h2>\n\u003cp>关键不在&quot;谁更聪明&quot;，而在\u003cstrong>谁在什么条件下可靠\u003c/strong>。系统一的错误是有规律的，所以可以被设计对冲；系统二的错误是它根本不出场。\u003c/p>\n\u003ch2>待补\u003c/h2>\n\u003cul>\u003cli>原文那句关于&quot;系统二是懒惰的控制者&quot;的表述，找到页码后补进 \u003ccode>quote\u003c/code>。\u003c/li>\u003c/ul>","bodyText":"我的理解 关键不在\"谁更聪明\"，而在 谁在什么条件下可靠 。系统一的错误是有规律的，所以可以被设计对冲；系统二的错误是它根本不出场。 待补 原文那句关于\"系统二是懒惰的控制者\"的表述，找到页码后补进 quote 。","bodyRaw":"## 我的理解\n\n关键不在\"谁更聪明\"，而在**谁在什么条件下可靠**。系统一的错误是有规律的，所以可以被设计对冲；系统二的错误是它根本不出场。\n\n## 待补\n\n- 原文那句关于\"系统二是懒惰的控制者\"的表述，找到页码后补进 `quote`。","_file":"content/units/system-1-and-2.md"},{"id":"anchoring","order":2,"page":0,"book":"thinking-fast-and-slow","title":"锚定效应","claim":"一个与问题无关的数字，会显著改变你随后给出的估计值，哪怕你明知它无关。","concept":"锚定：先接触到一个数值，之后的判断会不自觉地朝这个数值靠拢，\n并且调整幅度通常不够。","principle":"两个机制同时在起作用：\n一是\"调整不足\"——从锚点出发做调整，往往在还差很远时就停下；\n二是\"启动效应\"——锚点让与它一致的记忆更容易被提取，判断因此被污染。","conditions":"只要存在一个先出现的数值，且判断包含不确定性，就足以产生锚定。\n专业经验、提醒\"这个数字是随机的\"都不能完全消除它。","method":"1. 谈判／报价前，先独立写下自己的估值，写下来再看对方数字。\n2. 做估计时先问\"如果完全没有这个数，我会给多少\"。\n3. 集体决策时让每个人先独立写，再公开讨论，避免第一个发言成为锚。","boundary":"当判断对象有精确、可查的客观标准时，锚定影响很小。\n对自己极度熟悉、有大量即时反馈的领域，锚定也会减弱。","transfer":"- 定价：先展示高价版本，再展示主推版本，主推版本会显得便宜。\n- 薪资谈判：先开口的一方设锚，但先开口也可能暴露信息。\n- 需求评估：用户说\"大概两周吧\"，这个\"两周\"会成为全组的锚，要另找基准。","quote":"","locator":"第一部分 · 第 11 章","evidence":"卡尼曼与特沃斯基的\"转盘实验\"：先转出一个随机数，再让人估计非洲国家在联合国的占比，估计值随随机数变化。","confidence":5,"confidenceNote":"效应量大、跨文化重复验证充分，是心理学里最稳的发现之一。","status":"已验证","tags":["认知","谈判","定价"],"links":["system-1-and-2"],"updated":"2026-11-26","bodyHtml":"\u003ch2>易混淆\u003c/h2>\n\u003cp>锚定 ≠ 参考点。参考点是&quot;你用来判断得失的基准&quot;（前景理论），锚点是&quot;一个无关数字对你的污染&quot;。两者都会移动判断，但机制不同。\u003c/p>","bodyText":"易混淆 锚定 ≠ 参考点。参考点是\"你用来判断得失的基准\"（前景理论），锚点是\"一个无关数字对你的污染\"。两者都会移动判断，但机制不同。","bodyRaw":"## 易混淆\n\n锚定 ≠ 参考点。参考点是\"你用来判断得失的基准\"（前景理论），锚点是\"一个无关数字对你的污染\"。两者都会移动判断，但机制不同。","_file":"content/units/anchoring.md"},{"id":"loss-aversion","order":3,"page":0,"book":"thinking-fast-and-slow","title":"损失厌恶","claim":"同样大小的损失带来的痛苦，大约是同等收益带来快乐的 2 倍，所以人不是按绝对值做选择，而是按\"相对参照点的得失\"做选择。","concept":"前景理论的核心：人评估结果时看的是相对于参照点的变化，不是最终状态。\n在这条曲线上，损失一侧比收益一侧更陡。","principle":"演化上说得通：丢掉已有的东西，往往比多拿一点更威胁生存。\n代价是，人为了回避一个确定的损失，会愿意承担期望值为负的赌注——\n也就是\"亏损时不肯止损\"的心理根源。","conditions":"需要存在一个参照点（现状、买入价、去年的业绩、别人的收益）。\n没有参照点，就没有\"损失\"可言。","method":"1. 先问：这次的参照点是谁设的？可以换吗？\n2. 把\"损失\"改写成\"放弃的收益\"，看判断是否变化。\n3. 在长期决策中，把单次结果和长期期望分开算。","boundary":"损失厌恶在金钱上最稳定，在时间和健康上强度不一。\n当损失是\"确定的、不可挽回的\"，人反而可能更理性地止损。","transfer":"- 产品定价：免费试用结束时，收回功能比\"从未拥有\"痛苦得多。\n- 管理：绩效目标的参照点设错了，激励会变成\"保底\"而不是\"冲刺\"。\n- 投资：套牢的本质是把成本价当成了参照点。","quote":"","locator":"第四部分 · 第 26 章","evidence":"前景理论有大量实验与现场数据支撑；但\"2 倍\"是粗略平均值，随情境、金额、文化变化。","confidence":4,"confidenceNote":"方向稳固，具体倍数不可当常数用。","status":"已验证","tags":["决策","定价","投资"],"links":["anchoring","system-1-and-2"],"updated":"2026-11-26","bodyHtml":"","bodyText":"","bodyRaw":"","_file":"content/units/loss-aversion.md"},{"id":"peak-end","order":4,"page":0,"book":"thinking-fast-and-slow","title":"峰终定律与过程忽视","claim":"人对一段经历的记忆，主要由最强烈的那个瞬间和结尾决定，而不是由总时长或平均体验决定。","concept":"记忆自我与体验自我是两套系统：体验自我活在当下，记忆自我事后打分。\n打分时用的是\"峰\"和\"终\"，中间的时长几乎不被计入。","principle":"记忆的职能是\"为未来做参考\"，不是\"忠实记录\"。\n一个高峰加一个好结尾，就足以让整段经历被记为\"好\"，\n所以记忆会系统性地忽略持续时间。","conditions":"在体验强度有明显起伏、且事后需要回忆评价的场景里最明显。\n对当下正在发生的体验，过程忽视不成立。","method":"1. 设计体验时，重点投放资源在\"峰值\"和\"结尾\"，中间段可以压缩。\n2. 做复盘时，先问\"我记的是峰值还是全过程\"。\n3. 医疗、服务、课程：结尾的体验权重被严重低估。","boundary":"近年复现性有争议：部分重复实验未能复现\"时长完全被忽略\"的强版本。\n\"峰值和结尾重要\"较稳，\"时长完全不重要\"较弱。","transfer":"- 服务设计：排队很久但结尾顺畅，评价会好于排队不久但结尾糟糕。\n- 课程设计：最后一节课的质量，决定学员对整门课的记忆。\n- 产品：收尾的动效和文案，价值被普遍低估。","quote":"","locator":"第五部分 · 第 35 章","evidence":"结肠镜实验、冷水实验是原始证据；后续元分析与重复实验结论不一致，需降权。","confidence":3,"confidenceNote":"定性地\"峰终重要\"可信；定量地\"时长无关\"证据不足。","status":"有争议","tags":["体验","记忆","设计"],"links":["system-1-and-2"],"updated":"2026-11-26","bodyHtml":"\u003ch2>为什么标&quot;有争议&quot;\u003c/h2>\n\u003cp>这条是这本书里最需要小心的结论之一。它被大量引用，但原始实验样本小、情境特殊。\u003cbr>把它当&quot;设计启发&quot;用是安全的，当&quot;心理定律&quot;用来做重大决策就不安全。\u003c/p>\n\u003ch2>待补\u003c/h2>\n\u003cul>\u003cli>找一篇近年的重复实验，补进 \u003ccode>evidence\u003c/code>，把可信度再压一档或恢复。\u003c/li>\u003c/ul>","bodyText":"为什么标\"有争议\" 这条是这本书里最需要小心的结论之一。它被大量引用，但原始实验样本小、情境特殊。 把它当\"设计启发\"用是安全的，当\"心理定律\"用来做重大决策就不安全。 待补 找一篇近年的重复实验，补进 evidence ，把可信度再压一档或恢复。","bodyRaw":"## 为什么标\"有争议\"\n\n这条是这本书里最需要小心的结论之一。它被大量引用，但原始实验样本小、情境特殊。\n把它当\"设计启发\"用是安全的，当\"心理定律\"用来做重大决策就不安全。\n\n## 待补\n\n- 找一篇近年的重复实验，补进 `evidence`，把可信度再压一档或恢复。","_file":"content/units/peak-end.md"},{"id":"latticework","order":1,"page":0,"book":"poor-charlies-almanack","title":"多元思维模型格栅","claim":"判断质量不取决于你知道多少结论，而取决于你手里有多少个来自不同学科、能互相校验的解释框架。","concept":"\"格栅\"（latticework）：把数学、物理、生物、心理、经济里最可靠的大模型并排放置，\n遇到问题时从多个格子里同时取用，而不是只从自己专业的那一个格子里取。","principle":"单一学科必然有盲区，而且盲区是系统性的——你越熟练，越看不见。\n多个模型交叉验证时，一致处提高置信度，冲突处暴露真正的分歧，\n这比\"再想一遍\"有效得多。","conditions":"需要真的掌握模型本身（成立条件、边界），而不是记住名字。\n手里只有名词、没有边界的\"模型\"，只会变成新的教条。","method":"1. 建立一张自己的模型清单，每个模型只写三件事：它解释什么、什么时候失效、一个例子。\n2. 遇到重要判断，强制列出至少三个来自不同学科的模型。\n3. 记录模型之间冲突的地方——冲突点通常就是关键变量。","boundary":"模型堆得太多会瘫痪决策。芒格自己也强调\"少数几个真正的大模型\"，\n而不是穷举。格栅的敌人不是模型太少，是模型太多且都不精。","transfer":"- 招人：用心理学（动机）+ 经济学（激励）+ 统计学（样本偏差）三个角度评一个候选人。\n- 产品复盘：用经济学（激励）+ 心理（认知负荷）+ 系统论（反馈回路）同时看。\n- 投资：商业模式（经济）+ 管理层动机（心理）+ 行业周期（历史）。","quote":"","locator":"第二讲 · 论基本的、普世的智慧","evidence":"芒格在多篇演讲中重复这一主张；但\"跨学科模型能提升判断\"目前主要是经验论证，缺少对照实验。","confidence":3,"confidenceNote":"方向可信，机制未被严格验证——属于\"高价值的工作假设\"。","status":"待验证","tags":["思维模型","决策","跨学科"],"links":["system-1-and-2","circle-of-competence","invert"],"updated":"2026-11-26","bodyHtml":"\u003ch2>我的理解\u003c/h2>\n\u003cp>格栅真正的作用可能不是&quot;更全面&quot;，而是\u003cstrong>强制你从系统一切换到系统二\u003c/strong>——列模型这个动作本身就在拖延直觉下结论。\u003c/p>\n\u003ch2>待验证\u003c/h2>\n\u003cp>如果要把它做成产品里的功能，需要证明：用了格栅的人，判断准确率真的高于不用的人。这是个可以做实验的点。\u003c/p>","bodyText":"我的理解 格栅真正的作用可能不是\"更全面\"，而是 强制你从系统一切换到系统二 ——列模型这个动作本身就在拖延直觉下结论。 待验证 如果要把它做成产品里的功能，需要证明：用了格栅的人，判断准确率真的高于不用的人。这是个可以做实验的点。","bodyRaw":"## 我的理解\n\n格栅真正的作用可能不是\"更全面\"，而是**强制你从系统一切换到系统二**——列模型这个动作本身就在拖延直觉下结论。\n\n## 待验证\n\n如果要把它做成产品里的功能，需要证明：用了格栅的人，判断准确率真的高于不用的人。这是个可以做实验的点。","_file":"content/units/latticework.md"},{"id":"invert","order":2,"page":0,"book":"poor-charlies-almanack","title":"逆向思考","claim":"与其问\"怎样成功\"，不如问\"怎样必然失败\"，然后避开那些事——反面往往比正面更容易穷举。","concept":"逆向（invert）：把目标取反，先列出会导致失败的所有路径，\n再检查自己是否正在其中任何一条上。","principle":"正面路径依赖具体条件、难以穷举；失败路径通常更通用、更容易识别。\n另外，人对\"避免损失\"的敏感度高于\"追求收益\"，逆向恰好借用了这个动机。","conditions":"适用于目标清晰、失败模式可识别的场景。\n在完全新型的、没有历史失败样本的领域，逆向能提供的帮助有限。","method":"1. 写下目标。\n2. 问：\"如果我要保证这件事失败，我会怎么做？\"列 10 条。\n3. 逐条检查自己是否正在做。\n4. 只针对命中项设计对策。","boundary":"逆向是筛选器，不是生成器。它能帮你排除明显的坑，\n但不能告诉你该往哪走——方向仍然要靠正面思考。","transfer":"- 项目复盘：不问\"哪里做得好\"，问\"哪些做法保证了我们一定会延期\"。\n- 个人成长：列出\"怎样保证我五年后还在原地\"，通常比列目标更扎心也更有效。\n- 写作：先列\"读者会在哪里放弃阅读\"，再针对性修改。","quote":"Invert, always invert.（反过来想，总是反过来想。）","locator":"第一讲 · 芒格的生平与投资哲学","evidence":"芒格引用数学家雅各比的\"反过来想，总是反过来想\"；属方法论主张，非实证结论。","confidence":3,"confidenceNote":"逻辑上成立，但\"逆向更有效\"缺乏对照研究，暂记为草稿。","status":"草稿","tags":["思维方法","复盘"],"links":["latticework"],"updated":"2026-11-26","bodyHtml":"\u003ch2>还没想清楚\u003c/h2>\n\u003cul>\u003cli>逆向列出的&quot;失败路径&quot;是否真的比&quot;成功路径&quot;更容易穷举？还是只是感觉上更容易？\u003c/li>\u003cli>如果逆向清单太长，会不会反而制造焦虑、瘫痪行动？\u003c/li>\u003cli>&quot;反过来想&quot;和&quot;事前验尸（pre-mortem）&quot;是同一件事吗？差别在哪？\u003c/li>\u003c/ul>","bodyText":"还没想清楚 逆向列出的\"失败路径\"是否真的比\"成功路径\"更容易穷举？还是只是感觉上更容易？ 如果逆向清单太长，会不会反而制造焦虑、瘫痪行动？ \"反过来想\"和\"事前验尸（pre mortem）\"是同一件事吗？差别在哪？","bodyRaw":"## 还没想清楚\n\n- 逆向列出的\"失败路径\"是否真的比\"成功路径\"更容易穷举？还是只是感觉上更容易？\n- 如果逆向清单太长，会不会反而制造焦虑、瘫痪行动？\n- \"反过来想\"和\"事前验尸（pre-mortem）\"是同一件事吗？差别在哪？","_file":"content/units/invert.md"},{"id":"circle-of-competence","order":3,"page":0,"book":"poor-charlies-almanack","title":"能力圈","claim":"知道自己不知道什么，比知道很多更重要；只在边界之内下重注，边界之外要么学习要么放弃。","concept":"能力圈：一个人真正有判断力的领域边界。\n关键不是圈有多大，而是你能不能准确画出这条线。","principle":"在圈内，你的判断有反馈、有积累，错误可以被纠正；\n在圈外，你会用圈内的直觉去解释圈外的事，而且自己察觉不到。\n所以\"圈的大小\"决定机会，\"圈的边界是否清晰\"决定生存。","conditions":"需要该领域存在快速、清晰的反馈，并且你确实长期在其中实践过。\n没有反馈的领域，待再久也长不出能力圈。","method":"1. 写下你认为自己懂的三个领域，各举一个\"我判断错了\"的具体案例——举不出来，说明不在圈内。\n2. 对每个重要决策标注：圈内 / 圈边缘 / 圈外。\n3. 圈外决策，要么找圈内的人，要么限定下注规模。","boundary":"能力圈会随环境变化而失效。行业规则变了、反馈延迟变长，原来的圈可能已经不成立。\n\"我一直做这个\"不等于\"我现在还在圈内\"。","transfer":"- 投资：只投看得懂的生意，看不懂就放过——错过不是错误，亏钱才是。\n- 职业选择：区分\"我擅长的\"和\"我以为我擅长的\"，后者靠别人的反馈来校准。\n- 团队：让每个人标出自己的圈，比让每个人说自己\"什么都能做\"更有用。","quote":"","locator":"第三讲 · 论基本的、普世的智慧（续）","evidence":"芒格与巴菲特多次公开表述；属于长期实践总结，缺少量化验证。","confidence":4,"confidenceNote":"逻辑自洽且有大量案例，但\"如何准确画出边界\"没有可操作的标准。","status":"已验证","tags":["决策","投资","自我认知"],"links":["latticework"],"updated":"2026-11-26","bodyHtml":"\u003ch2>一个可操作的检验\u003c/h2>\n\u003cp>问自己：\u003cstrong>这个领域里，我最近一次被现实打脸是什么时候？\u003c/strong>\u003cbr>如果答案是&quot;很久没有&quot;或者&quot;想不起来&quot;，通常不是因为你都对，而是因为你不在有反馈的地方。\u003c/p>","bodyText":"一个可操作的检验 问自己： 这个领域里，我最近一次被现实打脸是什么时候？ 如果答案是\"很久没有\"或者\"想不起来\"，通常不是因为你都对，而是因为你不在有反馈的地方。","bodyRaw":"## 一个可操作的检验\n\n问自己：**这个领域里，我最近一次被现实打脸是什么时候？**\n如果答案是\"很久没有\"或者\"想不起来\"，通常不是因为你都对，而是因为你不在有反馈的地方。","_file":"content/units/circle-of-competence.md"},{"id":"specific-knowledge","order":1,"page":0,"book":"almanack-of-naval","title":"专长","claim":"真正值钱的知识是没法通过培训获得的——它长在好奇心和经历里，所以没人能把你外包掉。","concept":"专长（specific knowledge）：无法被标准化教学、无法批量复制的能力组合。\n常见的判断标准是：对你来说像玩，对别人来说像工作。","principle":"如果一件事能被写成教材、按步骤教会，它就会被大量供给，价格随之下降，也就不再稀缺。\n专长之所以稀缺，是因为它依赖个人特有的经历、品味和判断，拆不成课程。\n这也解释了为什么\"高薪但可培训\"的岗位最容易被替代。","conditions":"需要长期在同一个方向上积累，并且有真实反馈；\n需要你对这件事有自发兴趣——否则撑不到复利显现的那一天。","method":"三个问题：\n1. 什么事我做起来不觉得累，别人却觉得很难？\n2. 我反复被谁请教什么问题？\n3. 如果把我的经验写成教程，哪一部分写不出来？写不出来的那部分，往往就是专长。","boundary":"\"专长\"不是自我感觉良好。没有外部市场验证，它可能只是爱好。\n在快速标准化的领域，今天的专长明天可能就变成基础技能。","transfer":"- 招聘：找\"做过但说不清步骤\"的人。说得太清楚，往往意味着可被培训替代。\n- 个人定位：先找不可替代的那部分，再谈包装。\n- 产品：把专长做成可交付物，而不是按小时卖时间。","quote":"","locator":"第一部分 · 财富","evidence":"纳瓦尔在推文与播客中反复表述；属于经验性主张，缺少对照研究。","confidence":3,"confidenceNote":"逻辑自洽、案例多，但\"不可培训\"的边界很模糊。","status":"待验证","tags":["财富","专长","职业"],"links":["leverage","productize-yourself"],"updated":"2026-11-26","bodyHtml":"","bodyText":"","bodyRaw":"","_file":"content/units/specific-knowledge.md"},{"id":"leverage","order":2,"page":0,"book":"almanack-of-naval","title":"三种杠杆","claim":"财富来自杠杆——同一份投入产生多份产出；而最好的杠杆（代码与媒体）不需要任何人批准。","concept":"杠杆有三种：\n1. 劳动力：雇人替你干活。\n2. 资本：用钱放大投入。\n3. 产品：代码、媒体、内容，做一次、卖很多次。\n前两种要别人点头，第三种不需要。","principle":"收入 = 专长 × 杠杆。\n没有杠杆，收入和时间绑定，是线性的；有杠杆，收入可以脱离时间，变成指数。\n纳瓦尔的表述是：你不可能靠出租时间致富，只能靠\"拥有\"点什么。","conditions":"需要先有可交付的东西（专长或产品），否则杠杆没有可放大的对象；\n需要判断力，因为杠杆会同时放大正确和错误。","method":"1. 看现在的收入是否与时间强绑定。如果是，先切出一块\"做一次、卖多次\"。\n2. 优先选无需许可的杠杆：写代码、写内容、做产品。\n3. 只放大已经验证过的东西，不要放大还没验证的猜测。","boundary":"杠杆放大的是判断，不是努力。判断错了，杠杆只会让你更快地错。\n在强监管、需要牌照和信任背书的行业，无需许可的杠杆作用有限。","transfer":"- 咨询顾问：把重复出现的方案做成模板或课程。\n- 程序员：写一次库，被很多项目引用。\n- 内容：一篇文章的边际成本接近零。","quote":"","locator":"第一部分 · 财富","evidence":"纳瓦尔的推文与播客；\"杠杆\"本身是经济学与金融学的成熟概念，机制清晰。","confidence":4,"confidenceNote":"机制层面可靠（杠杆确实放大产出），具体路径高度依赖个人条件。","status":"待验证","tags":["财富","杠杆","商业模式"],"links":["specific-knowledge","judgment","productize-yourself"],"updated":"2026-11-26","bodyHtml":"","bodyText":"","bodyRaw":"","_file":"content/units/leverage.md"},{"id":"productize-yourself","order":3,"page":0,"book":"almanack-of-naval","title":"把自己产品化","claim":"你能提供的最稀缺的东西是\"你自己\"；把它做成可规模化的产品，是普通人成本最低的一条路。","concept":"产品化 = 独特性的可复制化。\n\"自己\"提供不可替代性，\"产品\"提供规模。","principle":"只有独特、不可规模化，就是卖时间，收入有天花板；\n只有规模、没有独特性，就是价格战，随时被替代。\n两者相乘才有护城河。","conditions":"需要一个能被清楚定义的交付物；\n需要一个能触达人的分发渠道。","method":"1. 找出只有你能做的那部分（也就是专长）。\n2. 把它压缩成可重复交付的形式：课程、工具、模板、内容。\n3. 用杠杆分发，而不是一对一交付。","boundary":"不是所有专长都适合产品化——高度定制、依赖长期关系的工作，产品化会损失深度。\n产品化也会把\"你\"变成标准件，反而削弱独特性，需要定期回到一线补充。","transfer":"- 设计师：把方法论做成模板集，而不是一直接单。\n- 顾问：把诊断流程做成测评工具。\n- 工程师：把内部工具开源成一个产品。","quote":"","locator":"第一部分 · 财富","evidence":"纳瓦尔的表述，加上大量独立创作者案例；属于经验归纳，不是实验。","confidence":3,"confidenceNote":"方向可信，但\"唯一可复制的路径\"是修辞——实际路径不止一条。","status":"待验证","tags":["财富","个人品牌","产品化"],"links":["specific-knowledge","leverage"],"updated":"2026-11-26","bodyHtml":"","bodyText":"","bodyRaw":"","_file":"content/units/productize-yourself.md"},{"id":"four-kinds-of-luck","order":4,"page":0,"book":"almanack-of-naval","title":"四种运气","claim":"运气分四种，前三种靠等待和努力，第四种是\"你成为某种人之后，机会主动来找你\"。","concept":"1. 盲目运气：纯意外。\n2. 辛苦运气：到处尝试，撞上的机会。\n3. 准备运气：在一个领域足够深，能认出别人看不见的机会。\n4. 独特性运气：因为你的声誉、作品、特质，机会主动找上门。","principle":"越往后，运气越像可以积累的资产。\n第四种运气的本质是\"可被检索到的独特性\"——你得先让别人能发现你。","conditions":"需要在某个领域长期、公开地做事；\n需要作品或观点是可被检索的（写出来、发出来）。","method":"1. 判断自己现在在等哪一种运气。\n2. 想拿到第四种，先让作品公开、可检索。\n3. 把\"碰运气\"换成\"提高被找到的概率\"。","boundary":"第四种运气需要时间，且不保证兑现。把它当策略，不要当承诺。\n在完全陌生的领域，\"被人找到\"之前，仍然只能靠前三种运气。","transfer":"- 职业：与其海投简历，不如让作品替你被找到。\n- 创作：持续公开输出，是建立\"被找到\"资产的方式。\n- 开源：代码即简历。","quote":"","locator":"第一部分 · 财富","evidence":"纳瓦尔的推文；属于对运气分类的经验性重构，不是实证研究。","confidence":3,"confidenceNote":"分类清晰好用，但\"第四种运气\"无法量化，也无法验证。","status":"草稿","tags":["运气","职业","长期主义"],"links":["specific-knowledge"],"updated":"2026-11-26","bodyHtml":"\u003ch2>还没想清楚\u003c/h2>\n\u003cul>\u003cli>第四种运气和&quot;幸存者偏差&quot;怎么区分？看到的是成功者，看不到那些同样公开做事但没被找到的人。\u003c/li>\u003cli>如果一个人性格不适合公开表达，第四种运气是不是就用不上？\u003c/li>\u003c/ul>","bodyText":"还没想清楚 第四种运气和\"幸存者偏差\"怎么区分？看到的是成功者，看不到那些同样公开做事但没被找到的人。 如果一个人性格不适合公开表达，第四种运气是不是就用不上？","bodyRaw":"## 还没想清楚\n\n- 第四种运气和\"幸存者偏差\"怎么区分？看到的是成功者，看不到那些同样公开做事但没被找到的人。\n- 如果一个人性格不适合公开表达，第四种运气是不是就用不上？","_file":"content/units/four-kinds-of-luck.md"},{"id":"judgment","order":5,"page":0,"book":"almanack-of-naval","title":"判断力","claim":"在杠杆时代，一个正确的判断能顶上一千小时的努力——因为杠杆把结果放大了。","concept":"判断力：在信息不完整时，做出高期望值选择的能力。\n它不等于聪明，也不等于知识量。","principle":"杠杆放大了每一个决定的结果，于是决策的方差被放大：\n\"做得对\"比\"做得多\"重要得多。\n同样的努力，放在对的判断上和被放大，放在错的判断上也被放大。","conditions":"需要领域内长期、真实的反馈；\n需要能承受不确定性，并且愿意在信息不足时下注。","method":"1. 先分可逆与不可逆：可逆的快做，不可逆的慢做。\n2. 提高判断靠三件事：读得多、想得久、和比你聪明的人争论。\n3. 记录每次判断和结果，用它校准自己。","boundary":"在执行层面，判断力不值钱，执行才值钱。\n早期阶段，行动优先于判断——没有足够样本，判断力无从谈起。","transfer":"- 投资：少数重仓决定决定收益，不是交易频率。\n- 职业：选行业、选合作对象，比努力更影响结果。\n- 产品：方向判断错了，执行越强亏得越快。","quote":"","locator":"第一部分 · 财富","evidence":"纳瓦尔的表述；与芒格的\"多元思维模型\"\"能力圈\"等判断框架相互印证。","confidence":3,"confidenceNote":"与芒格的判断框架高度一致，但\"一千小时\"是修辞，不是测量。","status":"待验证","tags":["判断","决策","杠杆"],"links":["leverage","latticework"],"updated":"2026-11-26","bodyHtml":"","bodyText":"","bodyRaw":"","_file":"content/units/judgment.md"},{"id":"happiness-is-a-skill","order":6,"page":0,"book":"almanack-of-naval","title":"幸福是一种技能","claim":"幸福不是被给予的状态，而是可以训练的技能；它的起点不是\"得到更多\"，而是\"少一点想要\"。","concept":"纳瓦尔把幸福定义为\"缺憾感的消失\"——不是得到了想要的，而是不再觉得缺什么。\n欲望是它的反面：一份\"在得到之前，不允许自己快乐\"的契约。","principle":"欲望的本质是制造不满足：每许一个愿，就在当下给自己设了一个\"不合格\"的判定。\n所以幸福感的提升，更多来自减少欲望，而不是增加所得。\n这也解释了为什么收入上升后幸福感会很快回落——欲望同步上调了。","conditions":"这个框架在基本生存与安全得到满足之后才成立。\n对结构性困境（贫困、疾病、暴力），\"减少欲望\"不是解法，也不该被当作解法。","method":"1. 把欲望写下来，逐条问：这是我选的，还是别人塞给我的？\n2. 练习\"已经够了\"的判断，而不是\"再多一点\"。\n3. 每天留一段不输入、不输出的时间：冥想、散步、发呆都行。","boundary":"\"减少欲望\"很容易被误读成躺平。它针对的是不必要的欲望，不是全部目标。\n在需要冲刺的阶段（创业早期、备考），过低的欲望反而有害。","transfer":"- 消费：区分\"我想要\"和\"我被展示\"。\n- 职业：把\"这份工作让我更平静还是更焦虑\"作为筛选条件之一。\n- 教育：少比较。比较是欲望的放大器。","quote":"","locator":"第二部分 · 幸福","evidence":"纳瓦尔的推文与访谈；与斯多葛学派、佛教\"苦源于执取\"的看法一致，属于哲学主张。","confidence":3,"confidenceNote":"与多个传统互相印证，但\"幸福\"无法客观量化，只能靠自评。","status":"待验证","tags":["幸福","欲望","心态"],"links":[],"updated":"2026-11-26","bodyHtml":"\u003ch2>一个反对意见\u003c/h2>\n\u003cp>这套说法有个隐含前提：\u003cstrong>人有能力调节自己的欲望\u003c/strong>。\u003cbr>但对一些人来说，焦虑和不满足不是&quot;选择&quot;出来的，而是生理或创伤导致的。把它当成&quot;技能问题&quot;，可能会变成对自己的二次指责。这一条需要单独讨论。\u003c/p>","bodyText":"一个反对意见 这套说法有个隐含前提： 人有能力调节自己的欲望 。 但对一些人来说，焦虑和不满足不是\"选择\"出来的，而是生理或创伤导致的。把它当成\"技能问题\"，可能会变成对自己的二次指责。这一条需要单独讨论。","bodyRaw":"## 一个反对意见\n\n这套说法有个隐含前提：**人有能力调节自己的欲望**。\n但对一些人来说，焦虑和不满足不是\"选择\"出来的，而是生理或创伤导致的。把它当成\"技能问题\"，可能会变成对自己的二次指责。这一条需要单独讨论。","_file":"content/units/happiness-is-a-skill.md"},{"id":"nvc-four-elements","order":1,"page":10,"book":"nonviolent-communication","title":"四要素","claim":"非暴力沟通不是\"好好说话\"的技巧，而是一条四步路径：先说观察到的事实，再说感受，再说需要，最后提出具体请求。","concept":"四个要素：观察、感受、需要、请求。\n观察是可被录像机记录的事实；感受是情绪，不是想法；\n需要是感受背后的东西；请求是具体、可执行、可以被拒绝的动作。","principle":"冲突往往不是因为需要不同，而是因为表达方式让对方听到的是评判。\n先把评判拆成\"事实—感受—需要\"，对方的注意力才会从自我辩护转回到事情本身。\n顺序不能乱：先说感受再说事实，听起来就是指责。","conditions":"需要双方还有沟通意愿；\n需要你在情绪还能自控的时候使用；\n需要请求本身是对方可以拒绝的。","method":"1. 说事实：这周有三个晚上你十点后回来。\n2. 说感受：我有点被落下。\n3. 说需要：我需要知道家里的节奏。\n4. 提请求：明天能不能提前发个消息？","boundary":"对方处于暴力或高度情绪化时，先保障安全，不要急着走流程。\n在权力极不对等的关系里（上下级、家暴），四步法替代不了制度性保护。","transfer":"- 亲子：把\"你怎么又磨蹭\"换成\"现在 7:40，我们 8 点要出门，我有点着急，希望你五分钟内穿好鞋\"。\n- 职场：把\"这个方案不行\"换成\"这版没有数据支撑，我需要看到转化率，能不能补一页\"。\n- 自我对话：把\"我真没用\"拆成\"我搞砸了这件事，我需要的是准备时间\"。","quote":"非暴力沟通的四个要素：观察，感受，需要，请求。它鼓励倾听，培育尊重与爱。","locator":"第一章 让爱融入生活","evidence":"全书的方法论主干；书中有大量案例，但没有对照研究，\"有效性\"目前主要靠实践者的经验。","confidence":3,"confidenceNote":"框架清晰、可操作，但\"四步就能化解冲突\"的强主张缺乏实证。","status":"待验证","tags":["沟通","方法","关系"],"links":["nvc-observation-vs-judgment","nvc-feelings-needs","nvc-request-vs-demand"],"updated":"2026-11-26","bodyHtml":"\u003ch2>我自己的话\u003c/h2>\n\u003cp>四步里最难的是第一步。因为人在生气时，说出来的&quot;事实&quot;往往已经掺了评价——\u003cbr>&quot;你总是迟到&quot;不是事实，&quot;这周你迟到了三次&quot;才是。\u003c/p>","bodyText":"我自己的话 四步里最难的是第一步。因为人在生气时，说出来的\"事实\"往往已经掺了评价—— \"你总是迟到\"不是事实，\"这周你迟到了三次\"才是。","bodyRaw":"## 我自己的话\n\n四步里最难的是第一步。因为人在生气时，说出来的\"事实\"往往已经掺了评价——\n\"你总是迟到\"不是事实，\"这周你迟到了三次\"才是。","_file":"content/units/nvc-four-elements.md"},{"id":"nvc-alienated-speech","order":2,"page":18,"book":"nonviolent-communication","title":"异化的沟通方式","claim":"道德评判、比较、回避责任、强人所难——这四种说话方式会系统性地切断共情，让人只听见攻击。","concept":"异化的沟通方式：让我们难以体会到心中爱的语言习惯。\n书里列了四类：道德评判、进行比较、回避责任、强人所难。","principle":"评判把\"我需要什么\"翻译成\"你哪里不对\"，对方的注意力立刻转向自我辩护。\n比较让人活在别人的标准里；\"不得不\"抹掉了自己的选择；\"你必须\"把请求变成了威胁。\n这四种模式的共同点，是让对方感到被定罪，而不是被理解。","conditions":"在压力、疲惫、权力差之下最容易出现，也最容易在自己身上出现。","method":"识别四类句式：\n1. 评判：\"你总是……\"\"你从不……\"\n2. 比较：\"你看别人……\"\n3. 回避责任：\"我不得不……\"\"你让我……\"\n4. 强人所难：\"你应该……\"\"不然就……\"","boundary":"不是永远不能评价。对行为的判断（\"这个操作有风险\"）和道德评判（\"你这个人不行\"）要分开。\n另一条边界：面对明确的伤害行为，\"不评判\"不能变成沉默。","transfer":"- 复盘一次吵架：把双方的话逐句标出这四类句式，再改写成观察 + 需要。\n- 管理：把\"态度不端正\"换成\"这周有两次会议没到\"。\n- 自我：把\"我不得不加班\"换成\"我选择加班，因为我在乎这份工作\"。","quote":"有些沟通方式使我们难以体会到心中的爱。……这些语言和表达方式，我称为\"异化的沟通方式\"。","locator":"第二章 是什么蒙蔽了爱","evidence":"书中有大量对话案例；四类划分来自作者二十年调解实践，属于经验归纳。","confidence":3,"confidenceNote":"分类好用，但\"这四类就是全部\"没有验证，实际可能还有其他模式。","status":"待验证","tags":["沟通","冲突","评判"],"links":["nvc-four-elements","nvc-feelings-needs"],"updated":"2026-11-26","bodyHtml":"\u003ch2>我的补充\u003c/h2>\n\u003cp>书里没有重点讲的一类：\u003cstrong>反问\u003c/strong>。&quot;你为什么总是……&quot;表面是提问，实际是定罪。它常和道德评判一起出现。\u003c/p>","bodyText":"我的补充 书里没有重点讲的一类： 反问 。\"你为什么总是……\"表面是提问，实际是定罪。它常和道德评判一起出现。","bodyRaw":"## 我的补充\n\n书里没有重点讲的一类：**反问**。\"你为什么总是……\"表面是提问，实际是定罪。它常和道德评判一起出现。","_file":"content/units/nvc-alienated-speech.md"},{"id":"nvc-observation-vs-judgment","order":3,"page":24,"book":"nonviolent-communication","title":"区分观察和评论","claim":"把\"你从不关心我\"换成\"这周你有三天没回我消息\"，对方才有可能听进去——因为评论触发防御，观察不会。","concept":"观察：可被摄像机记录下来的事实。\n评论：对事实的解释、归纳和评价。\n\"他昨天迟到了二十分钟\"是观察；\"他没有时间观念\"是评论。","principle":"人听到评论时，第一反应是反驳评论，而不是回应需要。\n观察把对话拉回可核对的事实层面，对方就不必先自证清白。\n书里的说法是：将观察和评论混为一谈，人们会倾向于听到批评，甚至产生逆反心理。","conditions":"需要你真的能分清事实和解释——这比听起来难得多。\n在强烈情绪下几乎做不到，通常要事后补。","method":"用\"录像机测试\"：这句话能不能被一台摄像机录下来？录不下来，就是评论。\n再补一步：把评论还原成\"我观察到的事实 + 我的需要\"。","boundary":"完全不评论既不现实也没必要。这本书强调的是\"区分\"，不是\"禁止评价\"。\n在需要快速判断的场景（安全、风控），直接给结论比描述事实更有效。","transfer":"- 绩效反馈：把\"你不够主动\"换成\"这两次需求变更你没有同步给我\"。\n- 亲密关系：\"你不在乎我\" → \"这周我们没一起吃过饭\"。\n- 带孩子：把\"你太粗心\"换成\"杯子打翻了两次\"。","quote":"将观察和评论混为一谈，人们将倾向于听到批评，甚至会产生逆反心理。","locator":"第三章 区分观察和评论","evidence":"书中有大量对照例句（观察式 vs 评论式）；与反馈研究里\"对事不对人\"的结论方向一致。","confidence":4,"confidenceNote":"例句层面的效果直观，机制也清楚；但\"观察一定比评论有效\"缺少严格对照。","status":"待验证","tags":["沟通","反馈","观察"],"links":["nvc-four-elements","nvc-alienated-speech"],"updated":"2026-11-26","bodyHtml":"\u003ch2>一个练习\u003c/h2>\n\u003cp>翻出你最近发过的一条带情绪的消息，做两件事：把里面所有评价删掉，只留事实。\u003cbr>如果删完什么都不剩，说明那条消息里没有事实。\u003c/p>","bodyText":"一个练习 翻出你最近发过的一条带情绪的消息，做两件事：把里面所有评价删掉，只留事实。 如果删完什么都不剩，说明那条消息里没有事实。","bodyRaw":"## 一个练习\n\n翻出你最近发过的一条带情绪的消息，做两件事：把里面所有评价删掉，只留事实。\n如果删完什么都不剩，说明那条消息里没有事实。","_file":"content/units/nvc-observation-vs-judgment.md"},{"id":"nvc-feelings-needs","order":4,"page":37,"book":"nonviolent-communication","title":"感受源于需要","claim":"别人做了什么只是刺激，不是原因；感受的根源是自己的需要有没有被满足。","concept":"感受的根源在于自身：我们的需要、期待，以及对他人言行的看法，导致了感受。\n\"你让我很生气\"把原因放到了对方身上；\"我很失望，因为我需要被同步\"把它放回了自己身上。","principle":"如果认定是别人\"让我\"难受，接下来只剩两条路：责怪，或者忍耐。\n如果看到是自己的需要没被满足，就有第三种可能——去谈需要。\n这也是书里说\"批评往往暗含着期待\"的原因：批评是需要的歪曲表达。","conditions":"需要你能识别自己真正的需要，而不是伪装成需要的请求（\"我需要你道歉\"其实是请求）。\n需要承受\"我的需要可能不被满足\"这件事。","method":"1. 用\"我感到……，因为我需要……\"造句。\n2. 听到批评时，先问：我这个情绪对应的是哪个需要？\n3. 把\"我应该\"换成\"我选择……因为……\"。","boundary":"这条最容易被误用。它不适用于人身伤害和权力压迫——把伤害归因成\"我的需要\"，会变成二次伤害。\n\"感受源于自身\"说的是归因方式，不是责任归属。别人打你，责任在对方。","transfer":"- 职场被否定：从\"他针对我\"转到\"我需要被看见工作过程\"。\n- 亲密关系冷战：先说出自己的需要，而不是等对方猜。\n- 自我指责：\"我真失败\" → \"我需要一点准备时间\"。","quote":"批评往往暗含着期待。对他人的批评实际上间接表达了我们尚未满足的需要。","locator":"第五章 感受的根源","evidence":"书中以\"听到不中听的话的四种选择\"展开；与情绪 ABC 模型、依恋理论的方向一致。","confidence":3,"confidenceNote":"归因转向有临床观察支持，但\"感受完全源于自身\"的强版本忽略了真实的外部伤害。","status":"待验证","tags":["沟通","情绪","需要"],"links":["nvc-four-elements","nvc-request-vs-demand"],"updated":"2026-11-26","bodyHtml":"\u003ch2>必须写下来的边界\u003c/h2>\n\u003cp>这一条是全书最容易被拿去做&quot;受害者有罪论&quot;的地方。\u003cbr>&quot;你的感受源于你的需要&quot;——在亲密关系的小摩擦里成立；在家暴、霸凌、剥削里，是错的。\u003cbr>引用这一条时，要连同它的边界一起引用。\u003c/p>","bodyText":"必须写下来的边界 这一条是全书最容易被拿去做\"受害者有罪论\"的地方。 \"你的感受源于你的需要\"——在亲密关系的小摩擦里成立；在家暴、霸凌、剥削里，是错的。 引用这一条时，要连同它的边界一起引用。","bodyRaw":"## 必须写下来的边界\n\n这一条是全书最容易被拿去做\"受害者有罪论\"的地方。\n\"你的感受源于你的需要\"——在亲密关系的小摩擦里成立；在家暴、霸凌、剥削里，是错的。\n引用这一条时，要连同它的边界一起引用。","_file":"content/units/nvc-feelings-needs.md"},{"id":"nvc-request-vs-demand","order":5,"page":53,"book":"nonviolent-communication","title":"请求与命令","claim":"判断一句话是请求还是命令，不看语气，看对方拒绝之后你的反应。","concept":"命令：不答应就有代价——指责、内疚、冷暴力、关系降级。\n请求：对方可以说不，而你仍然愿意理解他为什么说不。","principle":"一旦对方感到\"不答应会有代价\"，他能看到的只有服从或反抗，合作就消失了。\n所以区分的关键不在措辞，而在\"被拒绝时你会怎么做\"。","conditions":"需要你能承受被拒绝；\n需要请求足够具体（\"对我好一点\"不是请求，\"今晚陪我散步二十分钟\"才是）。","method":"1. 提出具体、可执行的行为请求。\n2. 事先想清楚：如果他拒绝，我会怎样？\n3. 如果答案是\"我会生气/会让他内疚\"，那这仍然是命令。","boundary":"在安全、法律、契约场景里，命令是必要的——\"别碰那个阀门\"不需要商量。\n请求式沟通不能替代规则和边界。","transfer":"- 管理：把\"这个周五之前必须给我\"换成\"周五前能给到吗？如果不能，你最早什么时候能给\"。\n- 亲子：给出可选项，而不是\"你必须现在写作业\"。\n- 伴侣：说清楚想要的具体行为，而不是\"你能不能对我上点心\"。","quote":"如何区分命令和请求：请求没有得到满足时，提出请求的人如果批评和指责，那就是命令；如果想利用对方的内疚也达到目的，也是命令。","locator":"第六章 请求帮助","evidence":"书中有\"杰克与珍妮\"的完整案例演示如何判断；属于操作性的判据，不是实证结论。","confidence":3,"confidenceNote":"判据清晰好用，但\"请求一定能换来合作\"过于乐观，忽略了对方也可以长期不回应。","status":"待验证","tags":["沟通","边界","请求"],"links":["nvc-four-elements","nvc-feelings-needs"],"updated":"2026-11-26","bodyHtml":"\u003ch2>一个自查\u003c/h2>\n\u003cp>回想你最近一次&quot;提请求&quot;被拒绝之后的反应。\u003cbr>如果你当时在心里给对方记了一笔，那一次其实是命令——只是包装成了请求。\u003c/p>","bodyText":"一个自查 回想你最近一次\"提请求\"被拒绝之后的反应。 如果你当时在心里给对方记了一笔，那一次其实是命令——只是包装成了请求。","bodyRaw":"## 一个自查\n\n回想你最近一次\"提请求\"被拒绝之后的反应。\n如果你当时在心里给对方记了一笔，那一次其实是命令——只是包装成了请求。","_file":"content/units/nvc-request-vs-demand.md"},{"id":"先胜后战","order":99,"page":0,"book":"孙子兵法","title":"先胜后战","claim":"先计算，后战斗","concept":"","principle":"","conditions":"","method":"","boundary":"","transfer":"","quote":"","locator":"","evidence":"","confidence":3,"confidenceNote":"","status":"草稿","tags":[],"links":[],"updated":"2026-11-26","bodyHtml":"","bodyText":"","bodyRaw":"","_file":"content/units/先胜后战.md"}],"generatedAt":"2026-11-26T14:33:45.924Z"};</script>
+<script>(function () {
+  'use strict';
+
+  var DATA = window.__KB__ || { books: [], units: [] };
+  var STATUS_LIST = ['草稿', '待验证', '已验证', '有争议', '已废弃'];
+  var FACETS = [
+    ['concept', '概念', '它是什么'],
+    ['principle', '原理', '为什么成立'],
+    ['conditions', '条件', '什么前提下成立'],
+    ['method', '方法', '具体怎么做'],
+    ['boundary', '边界', '什么时候不成立'],
+    ['transfer', '迁移', '还能用在哪']
+  ];
+
+  var overlay = null;
+  var onDone = null;
+
+  function e(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function bookTitle(id) {
+    var b = DATA.books.filter(function (x) { return x.id === id; })[0];
+    return b ? b.title : id;
+  }
+
+  /* ── 表单片段 ───────────────────────────────────── */
+
+  function text(f, v) {
+    return '<label class="ed-f"><span>' + f.label +
+      (f.hint ? '<i>' + f.hint + '</i>' : '') + '</span>' +
+      '<input type="text" name="' + f.k + '" value="' + e(v) + '"' +
+      (f.ph ? ' placeholder="' + e(f.ph) + '"' : '') + '></label>';
+  }
+
+  function area(f, v) {
+    return '<label class="ed-f' + (f.wide ? ' ed-wide' : '') + '"><span>' + f.label +
+      (f.hint ? '<i>' + f.hint + '</i>' : '') + '</span>' +
+      '<textarea name="' + f.k + '" rows="' + (f.rows || 3) + '"' +
+      (f.ph ? ' placeholder="' + e(f.ph) + '"' : '') + '>' + e(v) + '</textarea></label>';
+  }
+
+  function select(f, v, opts) {
+    return '<label class="ed-f"><span>' + f.label + '</span><select name="' + f.k + '">' +
+      opts.map(function (o) {
+        return '<option value="' + e(o) + '"' + (String(o) === String(v) ? ' selected' : '') + '>' + e(o) + '</option>';
+      }).join('') + '</select></label>';
+  }
+
+  /* ── 打开 / 关闭 ────────────────────────────────── */
+
+  function ensureOverlay() {
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.className = 'ed-overlay';
+    overlay.hidden = true;
+    overlay.addEventListener('mousedown', function (ev) {
+      if (ev.target === overlay) close();
+    });
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function close() {
+    if (!overlay) return;
+    overlay.hidden = true;
+    overlay.innerHTML = '';
+    document.documentElement.classList.remove('ed-lock');
+  }
+
+  function mount(html) {
+    var o = ensureOverlay();
+    o.innerHTML = html;
+    o.hidden = false;
+    document.documentElement.classList.add('ed-lock');
+    var first = o.querySelector('input,textarea,select');
+    if (first) setTimeout(function () { first.focus(); }, 40);
+  }
+
+  /* ── 知识点表单 ─────────────────────────────────── */
+
+  function openUnit(data, isNew) {
+    var u = data || {};
+    var bookOpts = DATA.books.map(function (b) {
+      return '<option value="' + e(b.id) + '"' + (b.id === u.book ? ' selected' : '') + '>' + e(b.title) + '</option>';
+    }).join('');
+
+    var linkOpts = DATA.units.filter(function (x) { return x.id !== u.id; }).map(function (x) {
+      var on = (u.links || []).indexOf(x.id) >= 0;
+      return '<option value="' + e(x.id) + '"' + (on ? ' selected' : '') + '>' +
+        e(bookTitle(x.book)) + ' · ' + e(x.title) + '</option>';
+    }).join('');
+
+    var tags = (u.tags || []).join(', ');
+
+    mount(
+      '<div class="ed-sheet">' +
+        '<div class="ed-head">' +
+          '<h2>' + (isNew ? '新建知识单元' : '编辑知识单元') + '</h2>' +
+          '<button class="ed-x" type="button" aria-label="关闭">✕</button>' +
+        '</div>' +
+        '<form class="ed-form" autocomplete="off">' +
+          (u.id ? '<input type="hidden" name="id" value="' + e(u.id) + '">' : '') +
+          '<section class="ed-sec"><h3>基本</h3><div class="ed-grid">' +
+            '<label class="ed-f"><span>所属书</span><select name="book">' + bookOpts + '</select></label>' +
+            text({ k: 'title', label: '标题', ph: '一句话说清这条知识' }, u.title) +
+            area({ k: 'claim', label: '一句话结论', hint: '必填', rows: 2, wide: true, ph: '写不出结论，说明还没想清楚' }, u.claim) +
+            select({ k: 'status', label: '状态' }, u.status || '草稿', STATUS_LIST) +
+            select({ k: 'confidence', label: '可信度' }, u.confidence || 3, ['1', '2', '3', '4', '5']) +
+          '</div></section>' +
+          '<section class="ed-sec"><h3>六要素</h3><div class="ed-grid">' +
+            FACETS.map(function (f) {
+              return area({ k: f[0], label: f[1], hint: f[2], rows: 3 }, u[f[0]]);
+            }).join('') +
+          '</div></section>' +
+          '<section class="ed-sec"><h3>原文与证据</h3><div class="ed-grid">' +
+            area({ k: 'quote', label: '原文摘录', rows: 2, wide: true, ph: '从书里抄一句，不要转述' }, u.quote) +
+            text({ k: 'locator', label: '出处', ph: '第一部分 · 第 1 章' }, u.locator) +
+            text({ k: 'page', label: 'PDF 页码', ph: '可不填' }, u.page || '') +
+            area({ k: 'evidence', label: '证据', rows: 2, wide: true, ph: '实验、数据、其他来源' }, u.evidence) +
+            area({ k: 'confidenceNote', label: '为什么是这个可信度', rows: 2, wide: true }, u.confidenceNote) +
+          '</div></section>' +
+          '<section class="ed-sec"><h3>其他</h3><div class="ed-grid">' +
+            text({ k: 'tags', label: '标签', ph: '用逗号分开：认知, 决策' }, tags) +
+            '<label class="ed-f"><span>关联<i>按住 Cmd 多选</i></span><select name="links" multiple size="5">' + linkOpts + '</select></label>' +
+            area({ k: 'note', label: '笔记', rows: 3, wide: true, ph: '自由写的部分，不参与结构化' }, u.bodyRaw) +
+          '</div></section>' +
+        '</form>' +
+        '<div class="ed-foot">' +
+          '<span class="ed-msg"></span>' +
+          '<button class="ed-cancel" type="button">取消</button>' +
+          '<button class="ed-save" type="button">' + (isNew ? '创建' : '保存') + '</button>' +
+        '</div>' +
+      '</div>'
+    );
+
+    wire(function (form) { return submit('unit', form, isNew); });
+  }
+
+  /* ── 书表单 ─────────────────────────────────────── */
+
+  function openBook(data) {
+    var b = data || {};
+    mount(
+      '<div class="ed-sheet ed-sheet-sm">' +
+        '<div class="ed-head">' +
+          '<h2>新建一本书</h2>' +
+          '<button class="ed-x" type="button" aria-label="关闭">✕</button>' +
+        '</div>' +
+        '<form class="ed-form" autocomplete="off">' +
+          (b.id ? '<input type="hidden" name="id" value="' + e(b.id) + '">' : '') +
+          '<section class="ed-sec"><h3>书</h3><div class="ed-grid">' +
+            text({ k: 'title', label: '书名' }, b.title) +
+            text({ k: 'originalTitle', label: '原书名', ph: '可不填' }, b.originalTitle) +
+            text({ k: 'author', label: '作者' }, b.author) +
+            text({ k: 'year', label: '年份', ph: '2011' }, b.year) +
+            text({ k: 'accent', label: '封面色', ph: '#33414a' }, b.accent || '') +
+            select({ k: 'status', label: '读到哪里' }, b.status || '在读', ['想读', '在读', '已拆', '已弃']) +
+            select({ k: 'rating', label: '我的评价' }, b.rating || 4, ['1', '2', '3', '4', '5']) +
+            text({ k: 'tags', label: '标签', ph: '用逗号分开' }, (b.tags || []).join(', ')) +
+          '</div></section>' +
+          '<section class="ed-sec"><h3>判断</h3><div class="ed-grid">' +
+            area({ k: 'thesis', label: '全书主张', rows: 3, wide: true }, b.thesis) +
+            area({ k: 'verdict', label: '怎么读', rows: 3, wide: true }, b.verdict) +
+            area({ k: 'audience', label: '写给谁', rows: 2, wide: true }, b.audience) +
+            area({ k: 'note', label: '笔记', rows: 3, wide: true }, b.bodyRaw) +
+          '</div></section>' +
+        '</form>' +
+        '<div class="ed-foot">' +
+          '<span class="ed-msg"></span>' +
+          '<button class="ed-cancel" type="button">取消</button>' +
+          '<button class="ed-save" type="button">' + (b.id ? '保存' : '创建') + '</button>' +
+        '</div>' +
+      '</div>'
+    );
+
+    wire(function (form) { return submit('book', form, !b.id); });
+  }
+
+  /* ── 提交 ───────────────────────────────────────── */
+
+  function wire(run) {
+    var form = overlay.querySelector('.ed-form');
+    overlay.querySelector('.ed-x').onclick = close;
+    overlay.querySelector('.ed-cancel').onclick = close;
+    overlay.querySelector('.ed-save').onclick = function () {
+      if (form.reportValidity && !form.reportValidity()) return;
+      run(form);
+    };
+    form.addEventListener('submit', function (ev) { ev.preventDefault(); });
+  }
+
+  function currentRev() {
+    return fetch('/__rev', { cache: 'no-store' }).then(function (r) { return r.text(); }).catch(function () { return null; });
+  }
+
+  function waitRebuild(before) {
+    var tries = 0;
+    return new Promise(function (resolve) {
+      (function tick() {
+        tries++;
+        currentRev().then(function (v) {
+          if (v && v !== before) return resolve(true);
+          if (tries > 40) return resolve(false);
+          setTimeout(tick, 160);
+        });
+      })();
+    });
+  }
+
+  function submit(kind, form, isNew) {
+    var msg = overlay.querySelector('.ed-msg');
+    var btn = overlay.querySelector('.ed-save');
+    var fd = new FormData(form);
+    var obj = { isNew: isNew };
+    fd.forEach(function (v, k) { if (k !== 'links') obj[k] = v; });
+    obj.links = fd.getAll('links');
+
+    btn.disabled = true;
+    btn.textContent = '保存中…';
+    msg.className = 'ed-msg';
+    msg.textContent = '';
+
+    var before = null;
+    currentRev().then(function (v) {
+      before = v;
+      return fetch('/api/' + kind, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(obj),
+      });
+    }).then(function (r) {
+      return r.json().then(function (j) {
+        if (!r.ok) throw new Error(j.error || '保存失败');
+        return j;
+      });
+    }).then(function (j) {
+      return waitRebuild(before).then(function (ok) {
+        if (!ok) {
+          msg.className = 'ed-msg bad';
+          msg.textContent = '文件已写入，但页面没等到重建。刷新一下试试。';
+          btn.disabled = false;
+          btn.textContent = isNew ? '创建' : '保存';
+          return;
+        }
+        close();
+        location.hash = '#/' + kind + '/' + encodeURIComponent(j.id);
+        location.reload();
+      });
+    }).catch(function (err) {
+      msg.className = 'ed-msg bad';
+      msg.textContent = err.message;
+      btn.disabled = false;
+      btn.textContent = isNew ? '创建' : '保存';
+    });
+  }
+
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && overlay && !overlay.hidden) close();
+  });
+
+  window.KBEditor = {
+    openUnit: openUnit,
+    openBook: openBook,
+    canEdit: location.protocol.indexOf('http') === 0,
+  };
+})();
+
+(function () {
+  'use strict';
+
+  var DATA = window.__KB__ || { books: [], units: [] };
+  var root = document.getElementById('root');
+
+  var STATUS = {
+    '已验证': { key: 'ok' },
+    '待验证': { key: 'warn' },
+    '有争议': { key: 'dispute' },
+    '草稿': { key: 'draft' },
+    '已废弃': { key: 'gone' }
+  };
+  var STATUS_LIST = ['已验证', '待验证', '有争议', '草稿'];
+
+  var FACETS = [
+    ['概念', 'concept'],
+    ['原理', 'principle'],
+    ['条件', 'conditions'],
+    ['方法', 'method'],
+    ['边界', 'boundary'],
+    ['迁移', 'transfer']
+  ];
+
+  var ICO_BOOK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"></path><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20"></path></svg>';
+  var ICO_GRID = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"></rect><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"></rect><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"></rect><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"></rect></svg>';
+
+  var bookById = {};
+  var unitById = {};
+  var backlinks = {};
+  var unitsByBook = {};
+  var hay = {};
+  var bookHay = {};
+
+  DATA.books.forEach(function (b) { bookById[b.id] = b; unitsByBook[b.id] = []; });
+  DATA.units.forEach(function (u) {
+    unitById[u.id] = u;
+    (unitsByBook[u.book] = unitsByBook[u.book] || []).push(u.id);
+    var b = bookById[u.book];
+    hay[u.id] = [
+      u.title, u.claim, u.concept, u.principle, u.conditions, u.method,
+      u.boundary, u.transfer, u.quote, u.evidence, u.confidenceNote,
+      (u.tags || []).join(' '), b ? b.title : '', u.bodyText
+    ].join(' ').toLowerCase();
+  });
+  DATA.units.forEach(function (u) {
+    (u.links || []).forEach(function (t) {
+      if (!unitById[t]) return;
+      (backlinks[t] = backlinks[t] || []).push(u.id);
+    });
+  });
+  DATA.books.forEach(function (b) {
+    var own = [b.title, b.originalTitle, b.author, b.thesis, b.audience, b.verdict,
+      (b.tags || []).join(' '), b.bodyText].join(' ');
+    var kids = (unitsByBook[b.id] || []).map(function (id) { return hay[id]; }).join(' ');
+    bookHay[b.id] = (own + ' ' + kids).toLowerCase();
+  });
+
+  var CAN_EDIT = false;   // 等探测到本地服务再打开
+  var state = { q: '', book: 'all', status: 'all' };
+
+  /* ── 工具 ─────────────────────────────────────────── */
+
+  function e(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function tokens() {
+    return state.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  }
+
+  function match(text, toks) {
+    if (!toks.length) return true;
+    for (var i = 0; i < toks.length; i++) if ((text || '').indexOf(toks[i]) < 0) return false;
+    return true;
+  }
+
+  function stars(n) {
+    var s = '';
+    for (var i = 0; i < 5; i++) s += '<i class="' + (i < n ? 'on' : '') + '">' + (i < n ? '★' : '☆') + '</i>';
+    return '<span class="stars" title="我的评价 ' + n + '/5">' + s + '</span>';
+  }
+
+  function confHtml(u, withLabel) {
+    var dots = '';
+    for (var i = 0; i < 5; i++) dots += '<i class="' + (i < u.confidence ? 'on' : '') + '"></i>';
+    return '<span class="conf" title="可信度 ' + u.confidence + ' / 5">' + dots +
+      (withLabel ? '<span class="conf-label">可信度 ' + u.confidence + '/5</span>' : '') + '</span>';
+  }
+
+  function badgeHtml(u) {
+    var st = STATUS[u.status] || STATUS['草稿'];
+    return '<span class="badge" data-s="' + st.key + '"><i></i>' + e(u.status) + '</span>';
+  }
+
+  function tagsHtml(list, max) {
+    var arr = (list || []).slice(0, max == null ? 3 : max);
+    return '<div class="tags">' + arr.map(function (t) {
+      return '<span class="tag">' + e(t) + '</span>';
+    }).join('') + '</div>';
+  }
+
+  // 空行 = 分段；行首 - 或 1. = 列表项；其余换行是软换行，直接接上（中文不插空格）
+  function facetHtml(t) {
+    return String(t).split(/\n\s*\n/).map(function (para) {
+      var out = '', buf = '';
+      para.split('\n').forEach(function (line) {
+        var m = /^\s*([-*·]|\d+[.)])\s+(.*)$/.exec(line);
+        if (m) {
+          if (buf) { out += e(buf); buf = ''; }
+          var isNum = /^\d/.test(m[1]);
+          out += '<span class="li' + (isNum ? ' num' : '') + '">' +
+            e(isNum ? m[1] + ' ' + m[2] : m[2]) + '</span>';
+        } else {
+          buf += line.trim();
+        }
+      });
+      if (buf) out += e(buf);
+      return '<p>' + out + '</p>';
+    }).join('');
+  }
+
+  function coverHtml(b, extra) {
+    var cls = 'cover' + (extra ? ' ' + extra : '');
+    var style = ' style="--c:' + e(b.accent || '#33414a') + '"';
+    if (b.cover) {
+      return '<div class="' + cls + '"' + style + '><img src="' + b.cover +
+        '" alt="' + e(b.title) + ' 封面" loading="lazy"></div>';
+    }
+    return '<div class="' + cls + '"' + style + '>' +
+      '<div class="cover-in">' +
+        '<div class="cv-title">' + e(b.title) + '</div>' +
+        '<div class="cv-rule"></div>' +
+        '<div class="cv-author">' + e(String(b.author || '').split('（')[0].trim()) + '</div>' +
+      '</div>' +
+      '</div>';
+  }
+
+  function labelOf(path) {
+    var v = parsePath(path);
+    if (v.name === 'unit') { var u = unitById[v.id]; return u ? u.title : '知识单元'; }
+    if (v.name === 'book') { var b = bookById[v.id]; return b ? b.title : '一本书'; }
+    if (v.name === 'units') return '全部知识点';
+    return '书架';
+  }
+
+  function backBtn() {
+    var target = backTarget();
+    var text = view.name === 'unit' ? '《' + e(labelOf(target)) + '》' : '书架';
+    return '<button class="back" data-back type="button">← 返回' + text + '</button>';
+  }
+
+  function toggleFoot(show) {
+    var f = document.querySelector('.foot');
+    if (f) f.hidden = !show;
+  }
+
+  function fail(title, sub) {
+    return '<div class="empty"><b>' + e(title) + '</b><span>' + e(sub) + '</span></div>';
+  }
+
+  /* ── 路由 ─────────────────────────────────────────── */
+
+  function parsePath(h) {
+    var m;
+    if ((m = /^#\/book\/(.+)$/.exec(h))) return { name: 'book', id: decodeURIComponent(m[1]) };
+    if ((m = /^#\/unit\/(.+)$/.exec(h))) return { name: 'unit', id: decodeURIComponent(m[1]) };
+    if (h === '#/all') return { name: 'units' };
+    return { name: 'shelf' };
+  }
+
+  function pathOf(v) {
+    if (v.name === 'book') return '#/book/' + encodeURIComponent(v.id);
+    if (v.name === 'unit') return '#/unit/' + encodeURIComponent(v.id);
+    if (v.name === 'units') return '#/all';
+    return '#/';
+  }
+
+  var view = { name: 'shelf' };
+
+  // 跳转不依赖 hash：先切视图、再渲染，最后尽力同步地址栏。
+  // file:// 下 pushState 会抛 SecurityError，退回改 hash；再不行就只保留内存里的视图。
+  // 这样即使预览环境拦截了 hash 导航，点击也不会失效。
+  function go(path) {
+    if (pathOf(view) === path) return;
+    view = parsePath(path);
+    render();
+    window.scrollTo(0, 0);
+    try {
+      history.pushState(null, '', path);
+    } catch (err) {
+      try { if (location.hash !== path) location.hash = path; } catch (e2) {}
+    }
+  }
+
+  // 返回按层级走，不按浏览历史：
+  //   知识点 → 它所属的书
+  //   书     → 书架
+  function backTarget() {
+    if (view.name === 'unit') {
+      var u = unitById[view.id];
+      if (u && u.book && bookById[u.book]) return '#/book/' + encodeURIComponent(u.book);
+    }
+    return '#/';
+  }
+
+  function back() {
+    go(backTarget());
+  }
+
+  // 地址栏变了（浏览器前进/后退，或 file:// 下的 hash 跳转）
+  // 地址栏变了（浏览器前进/后退）
+  function syncFromUrl() {
+    var v = parsePath(location.hash || '#/');
+    if (v.name === view.name && v.id === view.id) return;
+    view = v;
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  /* ── 筛选 ─────────────────────────────────────────── */
+
+  function visibleUnits(bookId) {
+    var toks = tokens();
+    return DATA.units.filter(function (u) {
+      if (bookId != null) {
+        if (u.book !== bookId) return false;
+      } else {
+        if (state.book !== 'all' && u.book !== state.book) return false;
+        if (state.status !== 'all' && u.status !== state.status) return false;
+      }
+      return match(hay[u.id], toks);
+    });
+  }
+
+  function visibleBooks() {
+    var toks = tokens();
+    return DATA.books.filter(function (b) { return match(bookHay[b.id], toks); });
+  }
+
+  /* ── 公共片段 ─────────────────────────────────────── */
+
+  function introHtml() {
+    return '<div class="intro"><h1>书籍拆解</h1>' +
+      '<p>一本书不是读完就完了——拆成可验证、可迁移、可教学的知识单元。</p></div>';
+  }
+
+  function addBtn(label, attrs) {
+    if (!CAN_EDIT) return '';
+    return '<button class="add-btn" ' + attrs + '>＋ ' + label + '</button>';
+  }
+
+  function viewbar(active, countText, extra) {
+    return '<div class="viewbar">' +
+      '<div class="seg">' +
+        '<a href="#/" class="' + (active === 'shelf' ? 'on' : '') + '">' + ICO_BOOK + '书架</a>' +
+        '<a href="#/all" class="' + (active === 'units' ? 'on' : '') + '">' + ICO_GRID + '知识点</a>' +
+      '</div>' +
+      '<div class="vb-right">' + (extra || '') + '<span class="rescount">' + countText + '</span></div>' +
+      '</div>';
+  }
+
+  function chipsHtml() {
+    var out = '<button class="chip" data-k="book" data-v="all" aria-pressed="' + (state.book === 'all') + '">全部书</button>';
+    DATA.books.forEach(function (b) {
+      out += '<button class="chip" data-k="book" data-v="' + e(b.id) + '" aria-pressed="' + (state.book === b.id) + '">' + e(b.title) + '</button>';
+    });
+    out += '<span class="divider"></span>';
+    out += '<button class="chip" data-k="status" data-v="all" aria-pressed="' + (state.status === 'all') + '">全部状态</button>';
+    STATUS_LIST.forEach(function (s) {
+      out += '<button class="chip" data-k="status" data-v="' + e(s) + '" aria-pressed="' + (state.status === s) + '">' + e(s) + '</button>';
+    });
+    return out;
+  }
+
+  function cardHtml(u) {
+    var b = bookById[u.book] || {};
+    return '<a class="card" href="#/unit/' + encodeURIComponent(u.id) + '">' +
+      '<div class="card-top"><span class="card-book">' + e(b.title || '') + '</span>' + badgeHtml(u) + '</div>' +
+      '<h2>' + e(u.title) + '</h2>' +
+      '<p class="card-claim">' + e(u.claim) + '</p>' +
+      '<div class="card-bot">' + confHtml(u, false) + tagsHtml(u.tags, 2) + '</div>' +
+      '</a>';
+  }
+
+  /* ── 书架 ─────────────────────────────────────────── */
+
+  function bookCard(b) {
+    return '<a class="book" href="#/book/' + encodeURIComponent(b.id) + '" title="' + e(b.title) + '">' +
+      coverHtml(b) +
+      (b.cover ? '<div class="book-title">' + e(b.title) + '</div>' : '') +
+      '<div class="book-cap"><span>' + b.unitCount + ' 条知识' +
+        (b.status ? ' · ' + e(b.status) : '') + '</span>' + stars(b.rating) + '</div>' +
+      '</a>';
+  }
+
+  function renderShelf() {
+    var list = visibleBooks();
+    var body = list.length
+      ? '<div class="shelf">' + list.map(bookCard).join('') + '</div>'
+      : fail('没有匹配的书', '搜索会同时匹配书名、作者和书里的知识单元。');
+
+    document.getElementById('main').innerHTML = introHtml() +
+      viewbar('shelf', list.length === DATA.books.length
+        ? DATA.books.length + ' 本'
+        : list.length + ' / ' + DATA.books.length + ' 本',
+        addBtn('新建书', 'data-add="book"')) +
+      body;
+
+    toggleFoot(true);
+    document.title = '知你 · 书架';
+  }
+
+  /* ── 全部知识点 ───────────────────────────────────── */
+
+  function renderUnits() {
+    var list = visibleUnits(null);
+    var grid = list.length
+      ? '<div class="grid">' + list.map(cardHtml).join('') + '</div>'
+      : fail('没有匹配的知识单元', '换个关键词，或者清掉筛选条件。');
+
+    document.getElementById('main').innerHTML = introHtml() +
+      viewbar('units', list.length === DATA.units.length
+        ? DATA.units.length + ' 条'
+        : list.length + ' / ' + DATA.units.length + ' 条',
+        addBtn('新建知识点', 'data-add="unit"')) +
+      '<div class="filters">' + chipsHtml() + '</div>' +
+      grid;
+
+    toggleFoot(true);
+    document.title = '知你 · 全部知识点';
+  }
+
+  /* ── 一本书 ───────────────────────────────────────── */
+
+  function renderBook(b) {
+    var units = visibleUnits(b.id);
+
+    var meta = [];
+    if (b.author) meta.push('<span>' + e(b.author) + '</span>');
+    if (b.year) meta.push('<span>' + e(b.year) + '</span>');
+    if (b.status) meta.push('<span class="tag">' + e(b.status) + '</span>');
+    meta.push(stars(b.rating));
+
+    document.getElementById('main').innerHTML =
+      '<div class="d-top">' + backBtn() +
+        (CAN_EDIT ? '<button class="edit-btn" data-edit="book" data-id="' + e(b.id) + '">编辑这本书</button>' : '') +
+      '</div>' +
+      '<div class="bh">' +
+        coverHtml(b, 'lg') +
+        '<div class="bh-info">' +
+          '<h1>' + e(b.title) + '</h1>' +
+          (b.originalTitle ? '<div class="bh-orig">' + e(b.originalTitle) + '</div>' : '') +
+          '<div class="bh-meta">' + meta.join('<i class="dot"></i>') + '</div>' +
+          (b.thesis ? '<p class="bh-thesis">' + e(b.thesis) + '</p>' : '') +
+          (b.verdict ? '<div class="bh-verdict"><span>怎么读</span><p>' + e(b.verdict) + '</p></div>' : '') +
+          (b.tags && b.tags.length ? '<div class="bh-tags">' + tagsHtml(b.tags, 6) + '</div>' : '') +
+          (b.pdf ? '<a class="pdf-link" href="' + b.pdf.href + '" target="_blank" rel="noopener">' +
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>' +
+            '原书 PDF<em>' + e(b.pdf.label) + '</em></a>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="sec-head"><h2 class="sec-title">' + units.length + ' 条知识单元</h2>' +
+        addBtn('新建', 'data-add="unit" data-book="' + e(b.id) + '"') + '</div>' +
+      (units.length
+        ? '<div class="grid">' + units.map(cardHtml).join('') + '</div>'
+        : fail('这本书还没有知识单元', '去 content/units/ 下新建一条，把 book 指向 ' + b.id + '。'));
+
+    toggleFoot(false);
+    document.title = b.title + ' · 知你';
+  }
+
+  /* ── 一条知识 ─────────────────────────────────────── */
+
+  function relatedOf(u) {
+    var seen = {}; seen[u.id] = true;
+    var out = [];
+    (u.links || []).forEach(function (id) {
+      var x = unitById[id];
+      if (x && !seen[id]) { seen[id] = true; out.push({ u: x, rel: '引用' }); }
+    });
+    (backlinks[u.id] || []).forEach(function (id) {
+      var x = unitById[id];
+      if (x && !seen[id]) { seen[id] = true; out.push({ u: x, rel: '被引用' }); }
+    });
+    return out;
+  }
+
+  function renderUnit(u) {
+    var b = bookById[u.book] || {};
+    var kicker = [b.title, u.locator].filter(Boolean).join('  ·  ');
+
+    var facets = FACETS.map(function (f) {
+      var val = (u[f[1]] || '').trim();
+      return '<div class="facet" data-f="' + f[1] + '">' +
+        '<dt><span>' + f[0] + '</span></dt>' +
+        '<dd>' + (val ? facetHtml(val) : '<p style="color:var(--faint)">未填写</p>') + '</dd>' +
+        '</div>';
+    }).join('');
+
+    var pageTag = u.page ? '第 ' + u.page + ' 页' : '';
+    var pdfHref = b.pdf ? b.pdf.href + (u.page ? '#page=' + u.page : '') : '';
+    var pdfLink = b.pdf
+      ? '<a class="q-go" href="' + pdfHref + '" target="_blank" rel="noopener">去原书' + pageTag + '核对 →</a>'
+      : '';
+
+    var quote = u.quote
+      ? '<blockquote>' + e(u.quote) + '</blockquote>'
+      : '<div class="q-empty"><b>缺口</b><span>还没录入原文摘录。这条结论目前只有转述，没有可核对的出处。' +
+        (pdfLink || '补上引文和页码，它才算有据可查。') + '</span></div>';
+
+    var rel = relatedOf(u);
+    var relHtml = rel.length
+      ? '<div class="rel"><h3>关联</h3><div class="rel-list">' + rel.map(function (r) {
+          return '<a class="rel-a" href="#/unit/' + encodeURIComponent(r.u.id) + '">' +
+            e(r.u.title) + '<em>' + r.rel + '</em></a>';
+        }).join('') + '</div></div>'
+      : '';
+
+    document.getElementById('main').innerHTML = '<div class="detail">' +
+      '<div class="d-top">' + backBtn() +
+        (CAN_EDIT ? '<button class="edit-btn" data-edit="unit" data-id="' + e(u.id) + '">编辑</button>' : '') +
+      '</div>' +
+      '<div class="d-kicker">' + e(kicker) + '</div>' +
+      '<h1 class="d-title">' + e(u.title) + '</h1>' +
+      '<p class="d-claim">' + e(u.claim) + '</p>' +
+      '<div class="d-badges">' + badgeHtml(u) + confHtml(u, true) + tagsHtml(u.tags, 6) + '</div>' +
+      '<dl class="facets">' + facets + '</dl>' +
+      '<div class="quote">' + quote +
+        (u.locator ? '<div class="q-loc">出自 ' + e(u.locator) +
+          (b.pdf ? ' · <a class="q-go" href="' + pdfHref + '" target="_blank" rel="noopener">PDF ' + (u.page ? '第 ' + u.page + ' 页' : '原文') + '</a>' : '') +
+          '</div>' : '') + '</div>' +
+      '<div class="evi">' +
+        '<div class="evi-row"><span>证据</span><p>' + (u.evidence ? e(u.evidence) : '<span style="color:var(--faint)">未填写</span>') + '</p></div>' +
+        '<div class="evi-row"><span>可信度</span><p>' + confHtml(u, false) +
+          (u.confidenceNote ? '<span class="evi-note">' + e(u.confidenceNote) + '</span>' : '') + '</p></div>' +
+      '</div>' +
+      relHtml +
+      (u.bodyHtml ? '<article class="md">' + u.bodyHtml + '</article>' : '') +
+      '<div class="meta">' + (u.updated ? '更新于 ' + e(u.updated) + ' · ' : '') +
+        '源文件 <code>' + e(u._file || '') + '</code></div>' +
+      '</div>';
+
+    toggleFoot(false);
+    document.title = u.title + ' · 知你';
+  }
+
+  /* ── 调度 ─────────────────────────────────────────── */
+
+  function render() {
+    var r = view;
+    if (r.name === 'unit') {
+      var u = unitById[r.id];
+      if (u) return renderUnit(u);
+      document.getElementById('main').innerHTML = fail('这条知识不存在', '可能 id 拼错了，或者已经被删掉。');
+      return;
+    }
+    if (r.name === 'book') {
+      var b = bookById[r.id];
+      if (b) return renderBook(b);
+      document.getElementById('main').innerHTML = fail('这本书不存在', '回书架看看有哪些书。');
+      return;
+    }
+    if (r.name === 'units') return renderUnits();
+    return renderShelf();
+  }
+
+  function mount() {
+    root.innerHTML =
+      '<header class="bar"><div class="wrap bar-in">' +
+        '<a class="brand" href="#/">' +
+          '<span class="mark">知</span>' +
+          '<span class="bt"><b>知你</b><i>书籍拆解</i></span>' +
+        '</a>' +
+        '<label class="search">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>' +
+          '<input id="q" type="search" placeholder="搜索 书名 / 标题 / 结论 / 概念 / 标签" autocomplete="off" />' +
+          '<kbd>/</kbd>' +
+        '</label>' +
+        '<span class="count">' + DATA.units.length + ' 条知识 · ' + DATA.books.length + ' 本书</span>' +
+      '</div></header>' +
+      '<main class="wrap" id="main"></main>' +
+      '<footer class="wrap foot"><p>内容来自 <code>content/</code> 下的 Markdown 文件。改完跑 <code>node src/build.mjs</code> 重新生成。<br>' +
+      '这是「知你」的第一个知识域：书籍拆解。结构（六要素 + 证据 + 状态）比内容更重要——内容可以慢慢换。</p></footer>';
+
+    var qEl = document.getElementById('q');
+    qEl.addEventListener('input', function () {
+      state.q = qEl.value;
+      if (view.name === 'unit') go('#/all');
+      else render();
+    });
+
+    document.getElementById('main').addEventListener('click', function (ev) {
+      var chip = ev.target.closest('.chip');
+      if (!chip) return;
+      state[chip.dataset.k] = chip.dataset.v;
+      render();
+    });
+
+    document.addEventListener('keydown', function (ev) {
+      var tag = (document.activeElement && document.activeElement.tagName) || '';
+      if (ev.key === '/' && !/INPUT|TEXTAREA/.test(tag)) {
+        ev.preventDefault();
+        qEl.focus();
+      } else if (ev.key === 'Escape') {
+        if (document.activeElement === qEl) qEl.blur();
+        else if (view.name !== 'shelf') go('#/');
+      }
+    });
+
+    document.addEventListener('click', function (ev) {
+      if (ev.target.closest && ev.target.closest('[data-back]')) {
+        ev.preventDefault();
+        back();
+        return;
+      }
+      var add = ev.target.closest ? ev.target.closest('[data-add]') : null;
+      if (add) {
+        ev.preventDefault();
+        if (!CAN_EDIT) return;
+        if (add.dataset.add === 'book') window.KBEditor.openBook(null);
+        else window.KBEditor.openUnit({ book: add.dataset.book || (DATA.books[0] || {}).id }, true);
+        return;
+      }
+      var ed = ev.target.closest ? ev.target.closest('[data-edit]') : null;
+      if (ed) {
+        ev.preventDefault();
+        if (!CAN_EDIT) return;
+        if (ed.dataset.edit === 'book') window.KBEditor.openBook(bookById[ed.dataset.id]);
+        else window.KBEditor.openUnit(unitById[ed.dataset.id], false);
+      }
+    });
+
+    // 所有站内链接都走 JS 跳转，不依赖浏览器处理 hash
+    document.addEventListener('click', function (ev) {
+      var a = ev.target && ev.target.closest ? ev.target.closest('a[href^="#/"]') : null;
+      if (!a) return;
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button) return;
+      ev.preventDefault();
+      go(a.getAttribute('href'));
+    });
+
+    window.addEventListener('popstate', syncFromUrl);
+    window.addEventListener('hashchange', syncFromUrl);
+
+    // 只有 /__rev 能通（本地预览服务）才启用编辑，部署出去的静态站不会出现按钮
+    fetch('/__rev', { cache: 'no-store' })
+      .then(function (r) {
+        if (r.ok && window.KBEditor) { CAN_EDIT = true; render(); }
+      })
+      .catch(function () {});
+
+    view = parsePath(location.hash || '#/');
+    render();
+  }
+
+  mount();
+})();
+</script>
+</body>
+</html>
