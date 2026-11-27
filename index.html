@@ -558,6 +558,16 @@ main { padding-top: 30px; padding-bottom: 100px; }
   .add-btn { white-space: nowrap; }
 }
 
+/* 单本书的导图：别被容器拉满，限制最大宽度并居中 */
+.bookmap { display: flex; justify-content: center; }
+.bookmap svg { width: 100%; max-width: 900px; height: auto; }
+
+@media (max-width: 860px) {
+  /* 单本书的导图在手机上横滑，别缩成看不见 */
+  .bookmap { overflow-x: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
+  .bookmap svg { width: 620px; max-width: none; flex: none; }
+}
+
 
 /* ── 网页里编辑 ─────────────────────────────────────── */
 
@@ -968,7 +978,7 @@ var CUR = { w: W, h: H };
     var sides = { right: books.slice(0, half), left: books.slice(half) };
     var nodes = [], edges = [];
 
-    ['right', 'left'].forEach(function (side) {
+    ['left', 'right'].forEach(function (side) {
       var list = sides[side];
       var dir = side === 'right' ? 1 : -1;
       var rows = list.reduce(function (n, b) { return n + b.units.length; }, 0);
@@ -1109,6 +1119,71 @@ var CUR = { w: W, h: H };
     return p.join('');
   }
 
+
+  /* ── 单本书的导图（左右分叉，横版） ──────────────── */
+
+  function bookSvg(bookId) {
+    var idx = -1;
+    for (var i = 0; i < DATA.books.length; i++) if (DATA.books[i].id === bookId) idx = i;
+    if (idx < 0) return null;
+    var book = DATA.books[idx];
+    var units = DATA.units.filter(function (u) { return u.book === bookId; });
+    if (!units.length) return null;
+
+    var color = NEON[idx % NEON.length];
+    var ROW = 62;
+    var half = Math.ceil(units.length / 2);
+    var sides = { left: units.slice(0, half), right: units.slice(half) };
+    var rows = Math.max(sides.right.length, sides.left.length, 1);
+    var H = Math.max(240, rows * ROW + 84);
+    var W = 900;
+    var CX = W / 2;
+    var CY = H / 2;
+    var GAP = 210;
+
+    var pillW = units.reduce(function (m, u) { return Math.max(m, u.title.length * 15 + 56); }, 96);
+    var bookW = book.title.length * 17 + 40;
+
+    var p = [];
+    p.push('<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + esc(book.title) + ' 的导图">');
+    p.push('<defs><pattern id="bm-dots" width="18" height="18" patternUnits="userSpaceOnUse">' +
+      '<circle cx="1" cy="1" r="0.6" fill="#ddd5c4"/></pattern></defs>');
+    p.push('<rect width="' + W + '" height="' + H + '" fill="#f7f3e8"/>');
+    p.push('<rect width="' + W + '" height="' + H + '" fill="url(#bm-dots)" opacity="0.7"/>');
+
+    ['right', 'left'].forEach(function (side) {
+      var list = sides[side];
+      var dir = side === 'right' ? 1 : -1;
+      list.forEach(function (u, k) {
+        var uy = CY + (k - (list.length - 1) / 2) * ROW;
+        var x2 = CX + dir * GAP;
+        var x1 = CX + dir * (bookW / 2 + 6);
+        var dx = (x2 - x1) * 0.5;
+        p.push('<path d="M ' + x1 + ' ' + CY + ' C ' + (x1 + dx) + ' ' + CY + ', ' + (x2 - dx) + ' ' + uy + ', ' + x2 + ' ' + uy +
+          '" fill="none" stroke="' + color + '" stroke-width="1.8" stroke-opacity="0.55" stroke-linecap="round"/>');
+
+        var px = dir > 0 ? x2 : x2 - pillW;
+        var dotX = dir > 0 ? px + 18 : px + pillW - 18;
+        var tx = dir > 0 ? px + 30 : px + pillW - 30;
+        var anchor = dir > 0 ? 'start' : 'end';
+        p.push('<a href="#/unit/' + encodeURIComponent(u.id) + '"><title>' + esc(u.title) + '</title>' +
+          '<rect x="' + px + '" y="' + (uy - 17) + '" width="' + pillW + '" height="34" rx="17" fill="' + color +
+          '" fill-opacity="0.16" stroke="' + color + '" stroke-opacity="0.42" stroke-width="1"/>' +
+          '<circle cx="' + dotX + '" cy="' + uy + '" r="3" fill="' + color + '"/>' +
+          '<text x="' + tx + '" y="' + (uy + 5) + '" text-anchor="' + anchor +
+          '" fill="#332c24" font-family="PingFang SC, sans-serif" font-size="14">' + esc(u.title) + '</text></a>');
+      });
+    });
+
+    p.push('<a href="#/book/' + encodeURIComponent(book.id) + '"><title>' + esc(book.title) + '</title>' +
+      '<rect x="' + (CX - bookW / 2) + '" y="' + (CY - 28) + '" width="' + bookW + '" height="56" rx="28" fill="' + color + '"/>' +
+      '<text x="' + CX + '" y="' + (CY + 6) + '" text-anchor="middle" fill="' + INK +
+      '" font-family="Songti SC, serif" font-size="17" font-weight="600" letter-spacing="1">' + esc(book.title) + '</text></a>');
+
+    p.push('</svg>');
+    return { svg: p.join(''), w: W, h: H };
+  }
+
   function exportPng() {
     var el = document.querySelector('#map-svg svg');
     if (!el) return Promise.reject(new Error('找不到导图'));
@@ -1146,7 +1221,7 @@ var CUR = { w: W, h: H };
     });
   }
 
-  window.KBMap = { svg: svg, exportPng: exportPng };
+  window.KBMap = { svg: svg, bookSvg: bookSvg, exportPng: exportPng };
 })();
 
 (function () {
@@ -1548,6 +1623,10 @@ var CUR = { w: W, h: H };
             '原书 PDF<em>' + e(b.pdf.label) + '</em></a>' : '') +
         '</div>' +
       '</div>' +
+      (window.KBMap && window.KBMap.bookSvg(b.id)
+        ? '<div class="sec-head"><h2 class="sec-title">这本书的导图</h2></div>' +
+          '<div class="mapwrap bookmap" id="bookmap">' + window.KBMap.bookSvg(b.id).svg + '</div>'
+        : '') +
       '<div class="sec-head"><h2 class="sec-title">' + units.length + ' 条知识单元</h2>' +
         addBtn('新建', 'data-add="unit" data-book="' + e(b.id) + '"') + '</div>' +
       (units.length
@@ -1556,6 +1635,13 @@ var CUR = { w: W, h: H };
 
     toggleFoot(false);
     document.title = b.title + ' · 知你';
+
+    requestAnimationFrame(function () {
+      var w = document.querySelector('.bookmap');
+      if (w && w.scrollWidth > w.clientWidth + 4) {
+        w.scrollLeft = (w.scrollWidth - w.clientWidth) / 2;
+      }
+    });
   }
 
   /* ── 一条知识 ─────────────────────────────────────── */
