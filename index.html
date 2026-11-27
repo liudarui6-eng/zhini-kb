@@ -1184,13 +1184,16 @@ var CUR = { w: W, h: H };
     return { svg: p.join(''), w: W, h: H };
   }
 
-  function exportPng() {
-    var el = document.querySelector('#map-svg svg');
-    if (!el) return Promise.reject(new Error('找不到导图'));
-    var clone = el.cloneNode(true);
+  function exportSvg(svgEl, filename) {
+    if (!svgEl) return Promise.reject(new Error('找不到导图'));
+    var vb = svgEl.viewBox && svgEl.viewBox.baseVal;
+    var w = (vb && vb.width) || CUR.w;
+    var h = (vb && vb.height) || CUR.h;
+
+    var clone = svgEl.cloneNode(true);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    clone.setAttribute('width', CUR.w);
-    clone.setAttribute('height', CUR.h);
+    clone.setAttribute('width', w);
+    clone.setAttribute('height', h);
 
     var svgText = new XMLSerializer().serializeToString(clone);
     var url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
@@ -1200,8 +1203,8 @@ var CUR = { w: W, h: H };
       img.onload = function () {
         var scale = 2;
         var c = document.createElement('canvas');
-        c.width = CUR.w * scale;
-        c.height = CUR.h * scale;
+        c.width = w * scale;
+        c.height = h * scale;
         var ctx = c.getContext('2d');
         ctx.fillStyle = '#f7f3e8';
         ctx.fillRect(0, 0, c.width, c.height);
@@ -1210,7 +1213,7 @@ var CUR = { w: W, h: H };
           if (!blob) return reject(new Error('导出失败'));
           var a = document.createElement('a');
           a.href = URL.createObjectURL(blob);
-          a.download = '知你-知识导图.png';
+          a.download = filename;
           a.click();
           setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
           resolve(true);
@@ -1221,7 +1224,15 @@ var CUR = { w: W, h: H };
     });
   }
 
-  window.KBMap = { svg: svg, bookSvg: bookSvg, exportPng: exportPng };
+  function exportPng() {
+    return exportSvg(document.querySelector('#map-svg svg'), '知你-知识导图.png');
+  }
+
+  function exportBook(title) {
+    return exportSvg(document.querySelector('#bookmap svg'), (title || '书') + '-导图.png');
+  }
+
+  window.KBMap = { svg: svg, bookSvg: bookSvg, exportPng: exportPng, exportBook: exportBook };
 })();
 
 (function () {
@@ -1624,7 +1635,8 @@ var CUR = { w: W, h: H };
         '</div>' +
       '</div>' +
       (window.KBMap && window.KBMap.bookSvg(b.id)
-        ? '<div class="sec-head"><h2 class="sec-title">这本书的导图</h2></div>' +
+        ? '<div class="sec-head"><h2 class="sec-title">这本书的导图</h2>' +
+          '<button class="edit-btn" data-export="book" data-title="' + e(b.title) + '" type="button">导出 PNG</button></div>' +
           '<div class="mapwrap bookmap" id="bookmap">' + window.KBMap.bookSvg(b.id).svg + '</div>'
         : '') +
       '<div class="sec-head"><h2 class="sec-title">' + units.length + ' 条知识单元</h2>' +
@@ -1795,6 +1807,19 @@ var CUR = { w: W, h: H };
         if (!CAN_EDIT) return;
         if (add.dataset.add === 'book') window.KBEditor.openBook(null);
         else window.KBEditor.openUnit({ book: add.dataset.book || (DATA.books[0] || {}).id }, true);
+        return;
+      }
+      var ex = ev.target.closest ? ev.target.closest('[data-export]') : null;
+      if (ex) {
+        ev.preventDefault();
+        if (!window.KBMap) return;
+        var label = ex.textContent;
+        ex.disabled = true;
+        ex.textContent = '导出中…';
+        window.KBMap.exportBook(ex.dataset.title).catch(function () {}).then(function () {
+          ex.disabled = false;
+          ex.textContent = label;
+        });
         return;
       }
       var ed = ev.target.closest ? ev.target.closest('[data-edit]') : null;
