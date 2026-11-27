@@ -1151,7 +1151,7 @@ var CUR = { w: W, h: H };
     p.push('<rect width="' + W + '" height="' + H + '" fill="#f7f3e8"/>');
     p.push('<rect width="' + W + '" height="' + H + '" fill="url(#bm-dots)" opacity="0.7"/>');
 
-    ['right', 'left'].forEach(function (side) {
+    ['left', 'right'].forEach(function (side) {
       var list = sides[side];
       var dir = side === 'right' ? 1 : -1;
       list.forEach(function (u, k) {
