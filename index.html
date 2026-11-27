@@ -537,6 +537,27 @@ main { padding-top: 30px; padding-bottom: 100px; }
 .sec-head { display: flex; align-items: center; gap: 12px; margin: 40px 0 18px; }
 .sec-head .sec-title { margin: 0; flex: 1; }
 
+/* ── 导图视图 ───────────────────────────────────────── */
+
+.vb-right .add-btn { margin-left: 0; }
+.mapwrap {
+  border: 1px solid var(--line); border-radius: var(--r);
+  background: #f7f3e8; overflow: hidden;
+}
+.mapwrap svg { display: block; width: 100%; height: auto; }
+.mapwrap a { text-decoration: none; }
+.mapwrap a:hover text { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.map-hint { margin: 12px 2px 0; font-size: 12px; color: var(--faint); }
+
+/* 窄屏走竖排布局，宽度自适应，不再横向滚动 */
+
+@media (max-width: 720px) {
+  .viewbar { flex-wrap: wrap; row-gap: 10px; }
+  .vb-right { width: 100%; justify-content: flex-end; }
+  .seg a { white-space: nowrap; padding: 5px 11px; }
+  .add-btn { white-space: nowrap; }
+}
+
 
 /* ── 网页里编辑 ─────────────────────────────────────── */
 
@@ -912,6 +933,226 @@ html.ed-lock, html.ed-lock body { overflow: hidden; }
   'use strict';
 
   var DATA = window.__KB__ || { books: [], units: [] };
+
+  var W = 1120, H = 740, CX = 560, CY = 370;
+var VW = 380;
+var CUR = { w: W, h: H };
+  var ROW = 28, BOOK_GAP = 16;
+  var BOOK_X = 196, UNIT_X = 402;
+  var NEON = ['#4fe3c1', '#7fa8ff', '#f5a35c', '#ff78bd', '#b79bff', '#79dd7f'];
+  var INK = '#1b1720';
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function curve(e) {
+    var dx = (e.x2 - e.x1) * 0.5;
+    return 'M ' + e.x1 + ' ' + e.y1 + ' C ' + (e.x1 + dx) + ' ' + e.y1 + ', ' +
+      (e.x2 - dx) + ' ' + e.y2 + ', ' + e.x2 + ' ' + e.y2;
+  }
+
+  function layout() {
+    var books = DATA.books.map(function (b, i) {
+      return {
+        id: b.id,
+        title: b.title,
+        color: NEON[i % NEON.length],
+        units: DATA.units.filter(function (u) { return u.book === b.id; })
+      };
+    }).filter(function (b) { return b.units.length > 0; });
+
+    var half = Math.ceil(books.length / 2);
+    var sides = { right: books.slice(0, half), left: books.slice(half) };
+    var nodes = [], edges = [];
+
+    ['right', 'left'].forEach(function (side) {
+      var list = sides[side];
+      var dir = side === 'right' ? 1 : -1;
+      var rows = list.reduce(function (n, b) { return n + b.units.length; }, 0);
+      var gaps = (list.length - 1) * BOOK_GAP;
+      var y = CY - (rows * ROW + gaps) / 2;
+
+      list.forEach(function (b) {
+        var blockH = b.units.length * ROW;
+        var bookY = y + blockH / 2;
+        nodes.push({ kind: 'book', id: b.id, title: b.title, color: b.color, x: CX + dir * BOOK_X, y: bookY, dir: dir });
+        edges.push({ x1: CX, y1: CY, x2: CX + dir * BOOK_X, y2: bookY, color: b.color, level: 1 });
+
+        b.units.forEach(function (u, i) {
+          var uy = y + i * ROW + ROW / 2;
+          nodes.push({ kind: 'unit', id: u.id, title: u.title, color: b.color, x: CX + dir * UNIT_X, y: uy, dir: dir });
+          edges.push({ x1: CX + dir * BOOK_X, y1: bookY, x2: CX + dir * UNIT_X, y2: uy, color: b.color, level: 2 });
+        });
+        y += blockH + BOOK_GAP;
+      });
+    });
+
+    return { nodes: nodes, edges: edges };
+  }
+
+
+  /* ── 竖排布局（窄屏） ─────────────────────────── */
+
+  function svgVertical() {
+    var books = DATA.books.map(function (b, i) {
+      return {
+        id: b.id, title: b.title, color: NEON[i % NEON.length],
+        units: DATA.units.filter(function (u) { return u.book === b.id; })
+      };
+    }).filter(function (b) { return b.units.length; });
+
+    var ROOTX = 40, BOOKX = 66, DOTX = 78, TEXTX = 88;
+    var cur = 78;
+    var items = [];
+    books.forEach(function (b) {
+      var bookY = cur + 13;
+      items.push({ kind: 'book', y: bookY, book: b });
+      cur += 28;
+      b.units.forEach(function (u) {
+        items.push({ kind: 'unit', y: cur + 11, book: b, unit: u });
+        cur += 24;
+      });
+      cur += 18;
+    });
+    var VH = cur + 16;
+    CUR = { w: VW, h: VH };
+
+    var p = [];
+    p.push('<svg viewBox="0 0 ' + VW + ' ' + VH + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="知识导图">');
+    p.push('<defs><pattern id="mm-dots" width="18" height="18" patternUnits="userSpaceOnUse">' +
+      '<circle cx="1" cy="1" r="0.6" fill="#ddd5c4"/></pattern></defs>');
+    p.push('<rect width="' + VW + '" height="' + VH + '" fill="#f7f3e8"/>');
+    p.push('<rect width="' + VW + '" height="' + VH + '" fill="url(#mm-dots)" opacity="0.7"/>');
+
+    // 主干
+    var lastBook = items.filter(function (i) { return i.kind === 'book'; }).pop();
+    p.push('<path d="M ' + ROOTX + ' 66 L ' + ROOTX + ' ' + lastBook.y + '" stroke="#cfc6b2" stroke-width="1.4" fill="none"/>');
+
+    items.forEach(function (it) {
+      if (it.kind === 'book') {
+        var w = it.book.title.length * 14 + 24;
+        p.push('<path d="M ' + ROOTX + ' ' + it.y + ' L ' + BOOKX + ' ' + it.y + '" stroke="' + it.book.color + '" stroke-width="1.6" stroke-opacity="0.7" fill="none"/>');
+        p.push('<a href="#/book/' + encodeURIComponent(it.book.id) + '">' +
+          '<rect x="' + BOOKX + '" y="' + (it.y - 13) + '" width="' + w + '" height="26" rx="13" fill="' + it.book.color + '"/>' +
+          '<text x="' + (BOOKX + w / 2) + '" y="' + (it.y + 4.5) + '" text-anchor="middle" fill="' + INK +
+          '" font-family="Songti SC, serif" font-size="13.5" font-weight="600">' + esc(it.book.title) + '</text></a>');
+      } else {
+        p.push('<path d="M ' + (BOOKX + 6) + ' ' + (it.y - 12) + ' L ' + (BOOKX + 6) + ' ' + it.y + ' M ' + (BOOKX + 6) + ' ' + it.y + ' L ' + DOTX + ' ' + it.y +
+          '" stroke="' + it.book.color + '" stroke-width="1.1" stroke-opacity="0.45" fill="none"/>');
+        p.push('<a href="#/unit/' + encodeURIComponent(it.unit.id) + '">' +
+          '<circle cx="' + DOTX + '" cy="' + it.y + '" r="3" fill="' + it.book.color + '"/>' +
+          '<circle cx="' + DOTX + '" cy="' + it.y + '" r="12" fill="transparent"/>' +
+          '<text x="' + TEXTX + '" y="' + (it.y + 4.5) + '" fill="#332c24" font-family="PingFang SC, sans-serif" font-size="12.5">' +
+          esc(it.unit.title) + '</text></a>');
+      }
+    });
+
+    // 根
+    p.push('<a href="#/">' +
+      '<circle cx="' + ROOTX + '" cy="40" r="26" fill="#1b1720"/>' +
+      '<circle cx="' + ROOTX + '" cy="40" r="20" fill="none" stroke="#4fe3c1" stroke-width="1"/>' +
+      '<text x="' + ROOTX + '" y="45" text-anchor="middle" fill="#f7f3e8" font-family="Songti SC, serif" font-size="15">知你</text></a>');
+
+    p.push('</svg>');
+    return p.join('');
+  }
+
+  function svg() {
+    if (window.matchMedia('(max-width: 860px)').matches) return svgVertical();
+    CUR = { w: W, h: H };
+    var L = layout();
+    var p = [];
+
+    p.push('<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="知识导图">');
+    p.push('<defs><pattern id="mm-dots" width="18" height="18" patternUnits="userSpaceOnUse">' +
+      '<circle cx="1" cy="1" r="0.6" fill="#ddd5c4"/></pattern></defs>');
+    p.push('<rect width="' + W + '" height="' + H + '" fill="#f7f3e8"/>');
+    p.push('<rect width="' + W + '" height="' + H + '" fill="url(#mm-dots)" opacity="0.7"/>');
+
+    L.edges.forEach(function (e) {
+      p.push('<path d="' + curve(e) + '" fill="none" stroke="' + e.color + '" stroke-width="' +
+        (e.level === 1 ? 2.4 : 1.6) + '" stroke-opacity="' + (e.level === 1 ? 0.9 : 0.5) +
+        '" stroke-linecap="round"/>');
+    });
+
+    L.nodes.forEach(function (n) {
+      if (n.kind === 'book') {
+        var w = n.title.length * 16 + 30;
+        p.push('<a href="#/book/' + encodeURIComponent(n.id) + '" class="mm-node">' +
+          '<title>' + esc(n.title) + ' · ' + '点开这本书</title>' +
+          '<rect x="' + (n.x - w / 2) + '" y="' + (n.y - 15) + '" width="' + w + '" height="30" rx="15" fill="' + n.color + '"/>' +
+          '<text x="' + n.x + '" y="' + (n.y + 5) + '" text-anchor="middle" fill="' + INK +
+          '" font-family="Songti SC, serif" font-size="15" font-weight="600" letter-spacing="1">' + esc(n.title) + '</text></a>');
+      } else {
+        var anchor = n.dir > 0 ? 'start' : 'end';
+        p.push('<a href="#/unit/' + encodeURIComponent(n.id) + '" class="mm-node">' +
+          '<title>' + esc(n.title) + '</title>' +
+          '<circle cx="' + n.x + '" cy="' + n.y + '" r="3" fill="' + n.color + '"/>' +
+          '<circle cx="' + n.x + '" cy="' + n.y + '" r="10" fill="transparent"/>' +
+          '<text x="' + (n.x + n.dir * 13) + '" y="' + (n.y + 4.5) + '" text-anchor="' + anchor +
+          '" fill="#332c24" font-family="PingFang SC, sans-serif" font-size="13">' + esc(n.title) + '</text></a>');
+      }
+    });
+
+    p.push('<a href="#/" class="mm-node"><title>回书架</title>' +
+      '<circle cx="' + CX + '" cy="' + CY + '" r="44" fill="#1b1720"/>' +
+      '<circle cx="' + CX + '" cy="' + CY + '" r="36" fill="none" stroke="#4fe3c1" stroke-width="1.2"/>' +
+      '<text x="' + CX + '" y="' + (CY - 2) + '" text-anchor="middle" fill="#f7f3e8" ' +
+      'font-family="Songti SC, serif" font-size="19" letter-spacing="2">知你</text>' +
+      '<text x="' + CX + '" y="' + (CY + 18) + '" text-anchor="middle" fill="#8a8072" ' +
+      'font-family="PingFang SC, sans-serif" font-size="8.5" letter-spacing="3">书籍拆解</text></a>');
+
+    p.push('</svg>');
+    return p.join('');
+  }
+
+  function exportPng() {
+    var el = document.querySelector('#map-svg svg');
+    if (!el) return Promise.reject(new Error('找不到导图'));
+    var clone = el.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    clone.setAttribute('width', CUR.w);
+    clone.setAttribute('height', CUR.h);
+
+    var svgText = new XMLSerializer().serializeToString(clone);
+    var url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
+
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var scale = 2;
+        var c = document.createElement('canvas');
+        c.width = CUR.w * scale;
+        c.height = CUR.h * scale;
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#f7f3e8';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(function (blob) {
+          if (!blob) return reject(new Error('导出失败'));
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = '知你-知识导图.png';
+          a.click();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+          resolve(true);
+        }, 'image/png');
+      };
+      img.onerror = function () { reject(new Error('图片渲染失败')); };
+      img.src = url;
+    });
+  }
+
+  window.KBMap = { svg: svg, exportPng: exportPng };
+})();
+
+(function () {
+  'use strict';
+
+  var DATA = window.__KB__ || { books: [], units: [] };
   var root = document.getElementById('root');
 
   var STATUS = {
@@ -933,6 +1174,7 @@ html.ed-lock, html.ed-lock body { overflow: hidden; }
   ];
 
   var ICO_BOOK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"></path><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20"></path></svg>';
+  var ICO_MAP = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="5.5" cy="12" r="2.6"></circle><circle cx="18.5" cy="6" r="2.6"></circle><circle cx="18.5" cy="18" r="2.6"></circle><path d="M7.9 10.9 16.2 7.1M7.9 13.1 16.2 16.9"></path></svg>';
   var ICO_GRID = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"></rect><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"></rect><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"></rect><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"></rect></svg>';
 
   var bookById = {};
@@ -1078,6 +1320,7 @@ html.ed-lock, html.ed-lock body { overflow: hidden; }
     if ((m = /^#\/book\/(.+)$/.exec(h))) return { name: 'book', id: decodeURIComponent(m[1]) };
     if ((m = /^#\/unit\/(.+)$/.exec(h))) return { name: 'unit', id: decodeURIComponent(m[1]) };
     if (h === '#/all') return { name: 'units' };
+    if (h === '#/map') return { name: 'map' };
     return { name: 'shelf' };
   }
 
@@ -1085,6 +1328,7 @@ html.ed-lock, html.ed-lock body { overflow: hidden; }
     if (v.name === 'book') return '#/book/' + encodeURIComponent(v.id);
     if (v.name === 'unit') return '#/unit/' + encodeURIComponent(v.id);
     if (v.name === 'units') return '#/all';
+    if (v.name === 'map') return '#/map';
     return '#/';
   }
 
@@ -1167,6 +1411,7 @@ html.ed-lock, html.ed-lock body { overflow: hidden; }
       '<div class="seg">' +
         '<a href="#/" class="' + (active === 'shelf' ? 'on' : '') + '">' + ICO_BOOK + '书架</a>' +
         '<a href="#/all" class="' + (active === 'units' ? 'on' : '') + '">' + ICO_GRID + '知识点</a>' +
+        '<a href="#/map" class="' + (active === 'map' ? 'on' : '') + '">' + ICO_MAP + '导图</a>' +
       '</div>' +
       '<div class="vb-right">' + (extra || '') + '<span class="rescount">' + countText + '</span></div>' +
       '</div>';
@@ -1241,6 +1486,37 @@ html.ed-lock, html.ed-lock body { overflow: hidden; }
 
     toggleFoot(true);
     document.title = '知你 · 全部知识点';
+  }
+
+  /* ── 导图 ─────────────────────────────────────────── */
+
+  function renderMap() {
+    document.getElementById('main').innerHTML = introHtml() +
+      viewbar('map', DATA.books.length + ' 本 · ' + DATA.units.length + ' 条',
+        '<button class="add-btn" id="map-export" type="button">导出 PNG</button>') +
+      '<div class="mapwrap" id="map-svg">' + window.KBMap.svg() + '</div>' +
+      '<p class="map-hint">点书签进书页，点条目进详情。</p>';
+
+    var btn = document.getElementById('map-export');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        btn.textContent = '导出中…';
+        window.KBMap.exportPng().catch(function () {}).then(function () {
+          btn.disabled = false;
+          btn.textContent = '导出 PNG';
+        });
+      });
+    }
+    toggleFoot(true);
+    document.title = '知你 · 知识导图';
+
+    // 手机上导图比屏幕宽，进来先把它滚到中间
+    requestAnimationFrame(function () {
+      var wrap = document.getElementById('map-svg');
+      if (!wrap || wrap.scrollWidth <= wrap.clientWidth + 4) return;
+      wrap.scrollLeft = (wrap.scrollWidth - wrap.clientWidth) / 2;
+    });
   }
 
   /* ── 一本书 ───────────────────────────────────────── */
@@ -1374,6 +1650,7 @@ html.ed-lock, html.ed-lock body { overflow: hidden; }
       return;
     }
     if (r.name === 'units') return renderUnits();
+    if (r.name === 'map') return renderMap();
     return renderShelf();
   }
 
@@ -1398,7 +1675,7 @@ html.ed-lock, html.ed-lock body { overflow: hidden; }
     var qEl = document.getElementById('q');
     qEl.addEventListener('input', function () {
       state.q = qEl.value;
-      if (view.name === 'unit') go('#/all');
+      if (view.name === 'unit' || view.name === 'map') go('#/all');
       else render();
     });
 
